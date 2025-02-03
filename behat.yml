@@ -1,0 +1,21 @@
+default:
+    paths:
+        features: features
+        bootstrap: features/bootstrap
+    suites:
+        default:
+            paths:
+                - %paths.base%/features
+            contexts:
+                - FeatureContext
+                - Behat\MinkExtension\Context\MinkContext
+        commercial:
+            paths: ['features/commercial']
+            contexts: ['CommercialContext']
+    extensions:
+        Behat\MinkExtension:
+            base_url: 'http://127.0.0.1:8000'
+            sessions:
+                default:
+                    browserkit:
+                        environment: test 
