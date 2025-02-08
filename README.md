@@ -64,25 +64,27 @@ El diagrama muestra la estructura central del dominio, incluyendo:
 
 ## Testing
 
-Este proyecto implementa tests unitarios siguiendo las mejores prácticas de Domain-Driven Design y Clean Architecture.
+Este proyecto implementa diferentes tipos de pruebas siguiendo las mejores prácticas de Domain-Driven Design y Clean Architecture:
 
-### Estructura de Tests
+### Tipos de Pruebas Implementadas
+- Tests Unitarios
+- Tests de Contrato (Contract Testing con Pact)
+- Tests de Integración
 
-### Cobertura Implementada
-- Value Objects
-  - Email (Validaciones, casos límite)
-- Queries
-  - GetUserByEmail (Con mocks y casos de error)
+### Documentación Detallada
+Para una guía completa sobre la estrategia de testing, incluyendo:
+- Estructura y organización de tests
+- Convenciones y buenas prácticas
+- Ejemplos de implementación
+- Guía de Contract Testing con Pact
+- Configuración y ejecución
 
-### Tecnologías de Testing
-- PHPUnit para testing unitario
-- XDebug para cobertura de código
-- Mocks para aislar dependencias
+👉 Ver la [Documentación Completa de Testing](tests/README.md)
 
 ### Ejecutar Tests
 
 ```bash
-# Ejecutar tests
+# Ejecutar todos los tests
 ./vendor/bin/phpunit
 
 # Generar reporte de cobertura
