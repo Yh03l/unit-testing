@@ -1,0 +1,198 @@
+{
+  "consumer": {
+    "name": "ServiceConsumer"
+  },
+  "interactions": [
+    {
+      "description": "Una solicitud GET a la lista de servicios",
+      "request": {
+        "headers": {
+          "Accept": "application/json"
+        },
+        "method": "GET",
+        "path": "/api/v1/services"
+      },
+      "response": {
+        "body": {
+          "data": [
+            {
+              "catalogo_id": "7af9380c-d420-4b07-852c-109ec67163be",
+              "descripcion": "Consulta nutricional personalizada",
+              "estado": "activo",
+              "id": "e842ca01-8e65-493b-a983-59814b298cb5",
+              "moneda": "USD",
+              "monto": 60,
+              "nombre": "Consulta Nutricional",
+              "tipo_servicio_id": "asesoramiento",
+              "vigencia": {
+                "date": "2025-01-01 00:00:00.000000",
+                "timezone": "UTC",
+                "timezone_type": 3
+              }
+            }
+          ]
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "body": {
+            "$.data": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 1
+                }
+              ]
+            },
+            "$.data[*].catalogo_id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+                }
+              ]
+            },
+            "$.data[*].descripcion": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.data[*].estado": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.data[*].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$"
+                }
+              ]
+            },
+            "$.data[*].moneda": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.data[*].monto": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.data[*].nombre": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.data[*].tipo_servicio_id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.data[*].vigencia.date": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.data[*].vigencia.timezone": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.data[*].vigencia.timezone_type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "Una solicitud POST para crear un nuevo servicio",
+      "request": {
+        "body": {
+          "catalogo_id": "7af9380c-d420-4b07-852c-109ec67163be",
+          "descripcion": "Consulta nutricional personalizada Testing",
+          "moneda": "USD",
+          "monto": 250,
+          "nombre": "Consulta Nutricional Testing",
+          "tipo_servicio_id": "asesoramiento",
+          "vigencia": "2025-03-31T23:59:59Z"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "method": "POST",
+        "path": "/api/v1/services"
+      },
+      "response": {
+        "body": {
+          "message": "Servicio creado exitosamente"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "body": {
+            "$.message": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          }
+        },
+        "status": 201
+      }
+    }
+  ],
+  "metadata": {
+    "pactRust": {
+      "ffi": "0.4.26",
+      "mockserver": "1.2.11",
+      "models": "1.2.7"
+    },
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  },
+  "provider": {
+    "name": "ServiceProvider"
+  }
+}
