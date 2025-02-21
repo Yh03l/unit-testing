@@ -6,7 +6,7 @@ namespace Commercial\Domain\Aggregates\User;
 
 use Commercial\Domain\ValueObjects\Email;
 
-final class Administrator extends User
+class Administrator extends User
 {
     public function __construct(
         string $id,

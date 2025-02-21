@@ -7,7 +7,7 @@ namespace Commercial\Domain\Aggregates\User;
 use Commercial\Domain\ValueObjects\Email;
 use DateTimeImmutable;
 
-final class Patient extends User
+class Patient extends User
 {
     public function __construct(
         string $id,
