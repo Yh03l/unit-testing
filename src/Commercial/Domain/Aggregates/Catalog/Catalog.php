@@ -31,7 +31,6 @@ class Catalog
             throw CatalogException::serviceAlreadyExists($service->getId());
         }
         $this->services[$service->getId()] = $service;
-        $this->services[] = $service;
         $this->addEvent(new ServiceAdded($this->id, $service->getId()));
     }
 
