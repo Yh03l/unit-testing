@@ -24,8 +24,13 @@ class RemoveServiceHandler
             throw CatalogException::notFound($command->getCatalogId());
         }
 
-        $catalog->removerServicio($command->getServiceId());
+        $catalog->removeService($command->getServiceId());
         
         $this->repository->save($catalog);
+    }
+
+    public function handle(RemoveServiceCommand $command): void
+    {
+        $this->__invoke($command);
     }
 } 
