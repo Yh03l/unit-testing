@@ -29,6 +29,33 @@ class ServiceStatusTest extends TestCase
         $this->assertEquals('suspendido', ServiceStatus::SUSPENDIDO->toString());
     }
 
+    public function testEnumValues(): void
+    {
+        $this->assertEquals('activo', ServiceStatus::ACTIVO->value);
+        $this->assertEquals('inactivo', ServiceStatus::INACTIVO->value);
+        $this->assertEquals('suspendido', ServiceStatus::SUSPENDIDO->value);
+    }
+
+    public function testEnumCases(): void
+    {
+        $cases = ServiceStatus::cases();
+        $this->assertCount(3, $cases);
+        $this->assertContains(ServiceStatus::ACTIVO, $cases);
+        $this->assertContains(ServiceStatus::INACTIVO, $cases);
+        $this->assertContains(ServiceStatus::SUSPENDIDO, $cases);
+    }
+
+    public function testEnumComparison(): void
+    {
+        $status1 = ServiceStatus::fromString('activo');
+        $status2 = ServiceStatus::ACTIVO;
+        $status3 = ServiceStatus::fromString('ACTIVO');
+
+        $this->assertTrue($status1 === $status2);
+        $this->assertTrue($status2 === $status3);
+        $this->assertTrue($status1 === $status3);
+    }
+
     #[DataProvider('validStatusProvider')]
     public function testAcceptsValidStatuses(string $input, ServiceStatus $expected): void
     {

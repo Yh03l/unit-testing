@@ -87,4 +87,31 @@ class GetUserByEmailHandlerTest extends TestCase
         $query = new GetUserByEmailQuery('invalid-email');
         $this->handler->handle($query);
     }
+
+    public function testInvokeCallsHandle(): void
+    {
+        // Arrange
+        $email = Email::fromString('test@example.com');
+        $query = new GetUserByEmailQuery('test@example.com');
+        $expectedUser = $this->createMock(User::class);
+        
+        $expectedUser->method('getNombre')->willReturn('John');
+        $expectedUser->method('getApellido')->willReturn('Doe');
+        $expectedUser->method('getEmail')->willReturn($email);
+
+        $this->repository
+            ->expects($this->once())
+            ->method('findByEmail')
+            ->with($email)
+            ->willReturn($expectedUser);
+
+        // Act
+        $result = $this->handler->__invoke($query);
+
+        // Assert
+        $this->assertNotNull($result);
+        $this->assertEquals('John', $result->nombre);
+        $this->assertEquals('Doe', $result->apellido);
+        $this->assertEquals('test@example.com', $result->email);
+    }
 } 
