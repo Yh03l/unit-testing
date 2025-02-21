@@ -11,7 +11,7 @@ final class Email
     private function __construct(string $value)
     {
         $this->ensureIsValidEmail($value);
-        $this->value = $value;
+        $this->value = trim($value);
     }
 
     public static function fromString(string $value): self
@@ -38,40 +38,45 @@ final class Email
             throw new \InvalidArgumentException('El email no puede estar vacío');
         }
 
-        // Validación básica con filter_var
-        if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
+        // Validar caracteres permitidos
+        if (!preg_match('/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/', $value)) {
             throw new \InvalidArgumentException(sprintf('<%s> no es un email válido', $value));
         }
 
-        // Validaciones adicionales
+        // Validar caracteres Unicode
+        if (mb_strlen($value) !== strlen($value)) {
+            throw new \InvalidArgumentException(sprintf('<%s> no es un email válido', $value));
+        }
+
+        // Validar cantidad de símbolos @
         $parts = explode('@', $value);
         if (count($parts) !== 2) {
-            throw new \InvalidArgumentException(sprintf('<%s> debe contener exactamente un símbolo @', $value));
+            throw new \InvalidArgumentException(sprintf('<%s> no es un email válido', $value));
         }
 
         [$local, $domain] = $parts;
 
         // Validar parte local
         if (strlen($local) > 64) {
-            throw new \InvalidArgumentException('La parte local del email no puede exceder 64 caracteres');
+            throw new \InvalidArgumentException(sprintf('<%s> no es un email válido', $value));
         }
 
         // Validar dominio
         if (strlen($domain) > 255) {
-            throw new \InvalidArgumentException('El dominio del email no puede exceder 255 caracteres');
+            throw new \InvalidArgumentException(sprintf('<%s> no es un email válido', $value));
         }
 
         if (str_starts_with($domain, '.') || str_ends_with($domain, '.')) {
-            throw new \InvalidArgumentException('El dominio no puede empezar ni terminar con punto');
+            throw new \InvalidArgumentException(sprintf('<%s> no es un email válido', $value));
         }
 
         if (str_contains($domain, '..')) {
-            throw new \InvalidArgumentException('El dominio no puede contener puntos consecutivos');
+            throw new \InvalidArgumentException(sprintf('<%s> no es un email válido', $value));
         }
 
-        // Validar que no contenga caracteres Unicode
-        if (mb_strlen($value) !== strlen($value)) {
-            throw new \InvalidArgumentException('El email no puede contener caracteres Unicode');
+        // Validación final con filter_var
+        if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
+            throw new \InvalidArgumentException(sprintf('<%s> no es un email válido', $value));
         }
     }
 
