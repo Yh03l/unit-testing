@@ -112,6 +112,38 @@ class ServiceTest extends TestCase
         $this->assertFalse($this->service->isActive());
     }
 
+    public function testCanUpdateStatus(): void
+    {
+        $this->assertTrue($this->service->canUpdateStatus(ServiceStatus::INACTIVO));
+        $this->assertTrue($this->service->canUpdateStatus(ServiceStatus::SUSPENDIDO));
+        
+        $this->service->updateEstado(ServiceStatus::SUSPENDIDO);
+        $this->assertFalse($this->service->canUpdateStatus(ServiceStatus::ACTIVO));
+        $this->assertFalse($this->service->canUpdateStatus(ServiceStatus::INACTIVO));
+    }
+
+    public function testCanBeModified(): void
+    {
+        $this->assertTrue($this->service->canBeModified());
+        
+        $this->service->updateEstado(ServiceStatus::INACTIVO);
+        $this->assertTrue($this->service->canBeModified());
+        
+        $this->service->updateEstado(ServiceStatus::SUSPENDIDO);
+        $this->assertFalse($this->service->canBeModified());
+    }
+
+    public function testCanUpdateCost(): void
+    {
+        $this->assertTrue($this->service->canUpdateCost());
+        
+        $this->service->updateEstado(ServiceStatus::INACTIVO);
+        $this->assertFalse($this->service->canUpdateCost());
+        
+        $this->service->updateEstado(ServiceStatus::SUSPENDIDO);
+        $this->assertFalse($this->service->canUpdateCost());
+    }
+
     public function testMagicGetMethod(): void
     {
         $this->assertEquals($this->defaultId, $this->service->id);

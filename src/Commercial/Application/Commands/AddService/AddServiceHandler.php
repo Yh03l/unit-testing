@@ -8,6 +8,7 @@ use Commercial\Domain\Repositories\CatalogRepository;
 use Commercial\Domain\Exceptions\CatalogException;
 use Commercial\Domain\Aggregates\Catalog\Service;
 use Commercial\Domain\ValueObjects\ServiceCost;
+use Commercial\Domain\ValueObjects\ServiceStatus;
 use Illuminate\Support\Str;
 
 class AddServiceHandler
@@ -39,11 +40,17 @@ class AddServiceHandler
             $command->getDescripcion(),
             $serviceCost,
             $command->getTipoServicioId(),
-            'activo'
+            ServiceStatus::ACTIVO,
+            $command->getCatalogId()
         );
 
         $catalog->agregarServicio($service);
         
         $this->repository->save($catalog);
+    }
+
+    public function handle(AddServiceCommand $command): void
+    {
+        $this->__invoke($command);
     }
 } 
