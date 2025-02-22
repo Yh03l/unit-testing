@@ -10,19 +10,26 @@ use PHPUnit\Framework\Attributes\DataProvider;
 
 class ServiceStatusTest extends TestCase
 {
-    public function testCreateFromValidString(): void
+    public function testFromStringReturnsCorrectEnum(): void
     {
-        $status = ServiceStatus::fromString('activo');
-        $this->assertSame(ServiceStatus::ACTIVO, $status);
+        $this->assertEquals(ServiceStatus::ACTIVO, ServiceStatus::fromString('activo'));
+        $this->assertEquals(ServiceStatus::INACTIVO, ServiceStatus::fromString('inactivo'));
+        $this->assertEquals(ServiceStatus::SUSPENDIDO, ServiceStatus::fromString('suspendido'));
+
+        // Probar con mayúsculas
+        $this->assertEquals(ServiceStatus::ACTIVO, ServiceStatus::fromString('ACTIVO'));
+        $this->assertEquals(ServiceStatus::INACTIVO, ServiceStatus::fromString('INACTIVO'));
+        $this->assertEquals(ServiceStatus::SUSPENDIDO, ServiceStatus::fromString('SUSPENDIDO'));
     }
 
-    public function testThrowsExceptionForInvalidStatus(): void
+    public function testFromStringThrowsExceptionForInvalidStatus(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        ServiceStatus::fromString('invalid-status');
+        $this->expectExceptionMessage('Estado de catálogo inválido');
+        ServiceStatus::fromString('invalid');
     }
 
-    public function testStatusToString(): void
+    public function testToStringReturnsCorrectString(): void
     {
         $this->assertEquals('activo', ServiceStatus::ACTIVO->toString());
         $this->assertEquals('inactivo', ServiceStatus::INACTIVO->toString());

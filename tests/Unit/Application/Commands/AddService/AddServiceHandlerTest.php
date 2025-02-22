@@ -175,4 +175,37 @@ class AddServiceHandlerTest extends MockeryTestCase
         // Assert
         $this->assertTrue(true); // Si llegamos aquí, no se lanzaron excepciones
     }
+
+    public function testHandleCallsInvoke(): void
+    {
+        // Arrange
+        $command = new AddServiceCommand(
+            $this->catalogId,
+            $this->nombre,
+            $this->descripcion,
+            $this->costo,
+            $this->moneda,
+            $this->vigencia,
+            $this->tipoServicioId
+        );
+
+        $this->repository->shouldReceive('findById')
+            ->with($this->catalogId)
+            ->once()
+            ->andReturn($this->catalog);
+
+        $this->catalog->shouldReceive('agregarServicio')
+            ->once()
+            ->with(Mockery::type(Service::class));
+
+        $this->repository->shouldReceive('save')
+            ->with($this->catalog)
+            ->once();
+
+        // Act
+        $this->handler->handle($command);
+
+        // Assert
+        $this->assertTrue(true); // Si llegamos aquí, no se lanzaron excepciones
+    }
 }

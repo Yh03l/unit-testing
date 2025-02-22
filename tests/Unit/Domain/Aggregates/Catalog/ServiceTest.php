@@ -51,15 +51,14 @@ class ServiceTest extends TestCase
         $this->assertEquals($this->defaultCatalogId, $this->service->getCatalogoId());
     }
 
-    public function testUpdateServiceInfo(): void
+    public function testUpdateValidService(): void
     {
         $this->service->update('New Name', 'New Description');
-        
         $this->assertEquals('New Name', $this->service->getNombre());
         $this->assertEquals('New Description', $this->service->getDescripcion());
     }
 
-    public function testCannotUpdateSuspendedService(): void
+    public function testUpdateThrowsExceptionWhenServiceIsSuspended(): void
     {
         $this->service->updateEstado(ServiceStatus::SUSPENDIDO);
         
@@ -69,18 +68,27 @@ class ServiceTest extends TestCase
         $this->service->update('New Name', 'New Description');
     }
 
-    public function testUpdateCost(): void
+    public function testUpdateCostValidService(): void
     {
-        $newCost = new ServiceCost(200.00, 'BOB', new DateTimeImmutable('2024-12-31'));
-        $this->service->updateCost($newCost);
+        $newCost = new ServiceCost(
+            150.00,
+            'BOB',
+            new DateTimeImmutable('2025-01-01')
+        );
         
+        $this->service->updateCost($newCost);
         $this->assertEquals($newCost, $this->service->getCosto());
     }
 
-    public function testCannotUpdateCostWhenInactive(): void
+    public function testUpdateCostThrowsExceptionWhenServiceIsNotActive(): void
     {
         $this->service->updateEstado(ServiceStatus::INACTIVO);
-        $newCost = new ServiceCost(200.00, 'BOB', new DateTimeImmutable('2024-12-31'));
+        
+        $newCost = new ServiceCost(
+            150.00,
+            'BOB',
+            new DateTimeImmutable('2025-01-01')
+        );
         
         $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('No se puede actualizar el costo del servicio en su estado actual');
@@ -88,10 +96,20 @@ class ServiceTest extends TestCase
         $this->service->updateCost($newCost);
     }
 
-    public function testUpdateStatus(): void
+    public function testUpdateEstadoValidTransition(): void
     {
         $this->service->updateEstado(ServiceStatus::INACTIVO);
         $this->assertEquals(ServiceStatus::INACTIVO, $this->service->getEstado());
+    }
+
+    public function testUpdateEstadoThrowsExceptionForInvalidTransition(): void
+    {
+        $this->service->updateEstado(ServiceStatus::SUSPENDIDO);
+        
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('No se puede actualizar el estado del servicio');
+        
+        $this->service->updateEstado(ServiceStatus::ACTIVO);
     }
 
     public function testCannotUpdateToActiveFromSuspended(): void

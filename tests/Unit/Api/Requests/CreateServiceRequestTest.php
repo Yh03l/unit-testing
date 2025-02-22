@@ -8,6 +8,35 @@ use Commercial\Api\Requests\CreateServiceRequest;
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\WithFaker;
 
+class TestableCreateServiceRequest extends CreateServiceRequest
+{
+    private array $inputData = [];
+
+    public function setInputData(array $data): void
+    {
+        $this->merge($data);
+    }
+
+    public function input($key = null, $default = null)
+    {
+        if ($key === null) {
+            return $this->inputData;
+        }
+
+        return $this->inputData[$key] ?? $default;
+    }
+
+    public function prepareForValidation(): void
+    {
+        parent::prepareForValidation();
+    }
+
+    public function merge(array $input): void
+    {
+        $this->inputData = array_merge($this->inputData, $input);
+    }
+}
+
 class CreateServiceRequestTest extends TestCase
 {
     use WithFaker;
@@ -75,5 +104,26 @@ class CreateServiceRequestTest extends TestCase
         $this->assertEquals('La fecha de vigencia debe ser una fecha válida', $messages['vigencia.date']);
         $this->assertEquals('El tipo de servicio es requerido', $messages['tipo_servicio_id.required']);
         $this->assertEquals('El catálogo es requerido', $messages['catalogo_id.required']);
+    }
+
+    public function testPrepareForValidation(): void
+    {
+        $request = new TestableCreateServiceRequest();
+        
+        // Test default values
+        $request->prepareForValidation();
+        $this->assertEquals(0, $request->input('monto'));
+        $this->assertNotNull($request->input('vigencia'));
+        
+        // Test with provided values
+        $monto = 100.50;
+        $vigencia = '2024-12-31 23:59:59';
+        $request->setInputData([
+            'monto' => $monto,
+            'vigencia' => $vigencia
+        ]);
+        $request->prepareForValidation();
+        $this->assertEquals($monto, $request->input('monto'));
+        $this->assertEquals($vigencia, $request->input('vigencia'));
     }
 } 

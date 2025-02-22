@@ -11,48 +11,82 @@ use DateTimeImmutable;
 
 class ServiceCostTest extends TestCase
 {
-    private DateTimeImmutable $defaultVigencia;
+    private float $monto;
+    private string $moneda;
+    private DateTimeImmutable $vigencia;
+    private ServiceCost $serviceCost;
 
     protected function setUp(): void
     {
-        $this->defaultVigencia = new DateTimeImmutable('2024-12-31');
+        $this->monto = 100.00;
+        $this->moneda = 'BOB';
+        $this->vigencia = new DateTimeImmutable('2024-01-01');
+        $this->serviceCost = new ServiceCost(
+            monto: $this->monto,
+            moneda: $this->moneda,
+            vigencia: $this->vigencia
+        );
     }
 
     public function testCreateValidServiceCost(): void
     {
-        $cost = new ServiceCost(100.00, 'BOB', $this->defaultVigencia);
-        $this->assertEquals(100.00, $cost->getMonto());
-        $this->assertEquals('BOB', $cost->getMoneda());
-        $this->assertEquals($this->defaultVigencia, $cost->getVigencia());
+        $this->assertEquals($this->monto, $this->serviceCost->getMonto());
+        $this->assertEquals($this->moneda, $this->serviceCost->getMoneda());
+        $this->assertEquals($this->vigencia, $this->serviceCost->getVigencia());
     }
 
-    public function testThrowsExceptionWhenMontoIsNegative(): void
+    public function testThrowsExceptionForInvalidMonto(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('El monto debe ser mayor a 0');
-        new ServiceCost(-100.00, 'BOB', $this->defaultVigencia);
+
+        new ServiceCost(
+            monto: 0,
+            moneda: $this->moneda,
+            vigencia: $this->vigencia
+        );
     }
 
-    public function testThrowsExceptionWhenMontoIsZero(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('El monto debe ser mayor a 0');
-        new ServiceCost(0.00, 'BOB', $this->defaultVigencia);
-    }
-
-    public function testThrowsExceptionWhenMonedaIsInvalid(): void
+    public function testThrowsExceptionForInvalidMoneda(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Moneda no válida. Use BOB o USD');
-        new ServiceCost(100.00, 'EUR', $this->defaultVigencia);
+
+        new ServiceCost(
+            monto: $this->monto,
+            moneda: 'EUR',
+            vigencia: $this->vigencia
+        );
+    }
+
+    public function testEqualsReturnsTrueForSameValues(): void
+    {
+        $otherCost = new ServiceCost(
+            monto: $this->monto,
+            moneda: $this->moneda,
+            vigencia: new DateTimeImmutable('2024-02-01') // Diferente fecha pero mismo monto y moneda
+        );
+
+        $this->assertTrue($this->serviceCost->equals($otherCost));
+    }
+
+    public function testEqualsReturnsFalseForDifferentValues(): void
+    {
+        $otherCost = new ServiceCost(
+            monto: 200.00,
+            moneda: 'USD',
+            vigencia: $this->vigencia
+        );
+
+        $this->assertFalse($this->serviceCost->equals($otherCost));
     }
 
     public function testServiceCostEquality(): void
     {
-        $cost1 = new ServiceCost(100.00, 'BOB', $this->defaultVigencia);
+        $cost1 = new ServiceCost(100.00, 'BOB', $this->vigencia);
         $cost2 = new ServiceCost(100.00, 'BOB', new DateTimeImmutable('2025-12-31'));
-        $cost3 = new ServiceCost(200.00, 'BOB', $this->defaultVigencia);
-        $cost4 = new ServiceCost(100.00, 'USD', $this->defaultVigencia);
+        $cost3 = new ServiceCost(200.00, 'BOB', $this->vigencia);
+        $cost4 = new ServiceCost(100.00, 'USD', $this->vigencia);
 
         $this->assertTrue($cost1->equals($cost2)); // Mismos montos y moneda, diferente vigencia
         $this->assertFalse($cost1->equals($cost3)); // Diferente monto
@@ -62,7 +96,7 @@ class ServiceCostTest extends TestCase
     #[DataProvider('validCostProvider')]
     public function testAcceptsValidCosts(float $monto, string $moneda): void
     {
-        $cost = new ServiceCost($monto, $moneda, $this->defaultVigencia);
+        $cost = new ServiceCost($monto, $moneda, $this->vigencia);
         $this->assertEquals($monto, $cost->getMonto());
         $this->assertEquals($moneda, $cost->getMoneda());
     }

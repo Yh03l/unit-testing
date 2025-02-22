@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Commercial\Domain\ValueObjects;
 
+use Tests\Unit\TestHelpers\DateTimeHelper;
+
 class ContractDate
 {
     private \DateTimeImmutable $fecha_inicio;
@@ -18,7 +20,7 @@ class ContractDate
 
     private function validateFechas(\DateTimeImmutable $fecha_inicio, ?\DateTimeImmutable $fecha_fin): void
     {
-        if ($fecha_inicio < new \DateTimeImmutable()) {
+        if ($fecha_inicio < DateTimeHelper::now()) {
             throw new \InvalidArgumentException('La fecha de inicio no puede ser en el pasado');
         }
 

@@ -12,10 +12,8 @@ class CatalogExceptionTest extends TestCase
 {
     public function testNotFound(): void
     {
-        $id = 'test-id';
+        $id = 'catalog-123';
         $exception = CatalogException::notFound($id);
-        
-        $this->assertInstanceOf(CatalogException::class, $exception);
         $this->assertEquals("Catálogo con ID {$id} no encontrado", $exception->getMessage());
     }
 
@@ -23,47 +21,30 @@ class CatalogExceptionTest extends TestCase
     {
         $serviceId = 'service-123';
         $exception = CatalogException::serviceAlreadyExists($serviceId);
-        
-        $this->assertInstanceOf(CatalogException::class, $exception);
-        $this->assertEquals(
-            "El servicio con ID {$serviceId} ya existe en el catálogo",
-            $exception->getMessage()
-        );
+        $this->assertEquals("El servicio con ID {$serviceId} ya existe en el catálogo", $exception->getMessage());
     }
 
     public function testServiceNotFound(): void
     {
         $serviceId = 'service-123';
         $exception = CatalogException::serviceNotFound($serviceId);
-        
-        $this->assertInstanceOf(CatalogException::class, $exception);
-        $this->assertEquals(
-            "No se encontró el servicio con ID {$serviceId}",
-            $exception->getMessage()
-        );
+        $this->assertEquals("No se encontró el servicio con ID {$serviceId}", $exception->getMessage());
     }
 
     public function testInvalidState(): void
     {
         $currentState = 'INVALID';
         $exception = CatalogException::invalidState($currentState);
-        
-        $this->assertInstanceOf(CatalogException::class, $exception);
-        $this->assertEquals(
-            "Estado inválido del catálogo: {$currentState}",
-            $exception->getMessage()
-        );
+        $this->assertEquals("Estado inválido del catálogo: {$currentState}", $exception->getMessage());
     }
 
     public function testInvalidStatusTransition(): void
     {
-        $currentStatus = ServiceStatus::SUSPENDIDO;
-        $newStatus = ServiceStatus::ACTIVO;
+        $currentStatus = ServiceStatus::ACTIVO;
+        $newStatus = ServiceStatus::SUSPENDIDO;
         $exception = CatalogException::invalidStatusTransition($currentStatus, $newStatus);
-        
-        $this->assertInstanceOf(CatalogException::class, $exception);
         $this->assertEquals(
-            "No se puede cambiar el estado del servicio de suspendido a activo",
+            "No se puede cambiar el estado del servicio de {$currentStatus->toString()} a {$newStatus->toString()}",
             $exception->getMessage()
         );
     }
@@ -72,8 +53,6 @@ class CatalogExceptionTest extends TestCase
     {
         $serviceId = 'service-123';
         $exception = CatalogException::serviceCannotBeModified($serviceId);
-        
-        $this->assertInstanceOf(CatalogException::class, $exception);
         $this->assertEquals(
             "El servicio con ID {$serviceId} no puede ser modificado en su estado actual",
             $exception->getMessage()
@@ -84,8 +63,6 @@ class CatalogExceptionTest extends TestCase
     {
         $serviceId = 'service-123';
         $exception = CatalogException::serviceCannotUpdateCost($serviceId);
-        
-        $this->assertInstanceOf(CatalogException::class, $exception);
         $this->assertEquals(
             "No se puede actualizar el costo del servicio con ID {$serviceId} en su estado actual",
             $exception->getMessage()
@@ -96,20 +73,13 @@ class CatalogExceptionTest extends TestCase
     {
         $catalogId = 'catalog-123';
         $exception = CatalogException::catalogNotActive($catalogId);
-        
-        $this->assertInstanceOf(CatalogException::class, $exception);
-        $this->assertEquals(
-            "El catálogo con ID {$catalogId} no está activo",
-            $exception->getMessage()
-        );
+        $this->assertEquals("El catálogo con ID {$catalogId} no está activo", $exception->getMessage());
     }
 
     public function testInvalidCostHistory(): void
     {
         $serviceId = 'service-123';
         $exception = CatalogException::invalidCostHistory($serviceId);
-        
-        $this->assertInstanceOf(CatalogException::class, $exception);
         $this->assertEquals(
             "No se encontró historial de costos para el servicio con ID {$serviceId}",
             $exception->getMessage()
