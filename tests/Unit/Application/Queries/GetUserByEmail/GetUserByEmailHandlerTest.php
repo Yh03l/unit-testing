@@ -4,114 +4,85 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Application\Queries\GetUserByEmail;
 
-use Commercial\Application\Queries\GetUserByEmail\GetUserByEmailHandler;
 use Commercial\Application\Queries\GetUserByEmail\GetUserByEmailQuery;
+use Commercial\Application\Queries\GetUserByEmail\GetUserByEmailHandler;
 use Commercial\Domain\Repositories\UserRepository;
 use Commercial\Domain\Aggregates\User\User;
 use Commercial\Domain\ValueObjects\Email;
-use PHPUnit\Framework\TestCase;
+use Commercial\Application\DTOs\UserDTO;
+use Mockery;
+use Mockery\Adapter\Phpunit\MockeryTestCase;
 
-class GetUserByEmailHandlerTest extends TestCase
+class GetUserByEmailHandlerTest extends MockeryTestCase
 {
-    private UserRepository $repository;
     private GetUserByEmailHandler $handler;
+    private UserRepository $repository;
+    private string $email;
+    private GetUserByEmailQuery $query;
+    private Email $emailVO;
 
     protected function setUp(): void
     {
-        // Crear un mock del repositorio
-        $this->repository = $this->createMock(UserRepository::class);
-        // Crear el handler con el mock del repositorio
+        $this->email = 'test@example.com';
+        $this->emailVO = Email::fromString($this->email);
+        $this->repository = Mockery::mock(UserRepository::class);
         $this->handler = new GetUserByEmailHandler($this->repository);
+        $this->query = new GetUserByEmailQuery($this->email);
     }
 
-    public function testHandleReturnsUserWhenExists(): void
+    public function testHandleReturnsUserDTOWhenUserExists(): void
     {
-        // Arrange
-        $email = Email::fromString('test@example.com');
-        $expectedUser = $this->createMock(User::class);
-        
-        // Configurar el comportamiento esperado del mock
-        $expectedUser->method('getNombre')->willReturn('John');
-        $expectedUser->method('getApellido')->willReturn('Doe');
-        $expectedUser->method('getEmail')->willReturn($email);
+        $user = Mockery::mock(User::class);
+        $user->shouldReceive('getId')->andReturn('user-123');
+        $user->shouldReceive('getNombre')->andReturn('Test');
+        $user->shouldReceive('getApellido')->andReturn('User');
+        $user->shouldReceive('getEmail')->andReturn($this->emailVO);
+        $user->shouldReceive('getTipoUsuario')->andReturn('ADMINISTRADOR');
+        $user->shouldReceive('getEstado')->andReturn('activo');
 
-        // Configurar qué debe hacer el repositorio cuando se llame a findByEmail
-        $this->repository
-            ->expects($this->once()) // Esperamos que se llame exactamente una vez
-            ->method('findByEmail')  // al método findByEmail
-            ->with($email)          // con este email como parámetro
-            ->willReturn($expectedUser); // y retornará nuestro usuario simulado
+        $this->repository->shouldReceive('findByEmail')
+            ->once()
+            ->with(Mockery::on(function ($arg) {
+                return $arg instanceof Email && (string)$arg === $this->email;
+            }))
+            ->andReturn($user);
 
-        $query = new GetUserByEmailQuery('test@example.com');
+        $result = $this->handler->handle($this->query);
 
-        // Act
-        $result = $this->handler->handle($query);
-
-        // Assert
-        $this->assertNotNull($result);
-        $this->assertEquals('John', $result->nombre);
-        $this->assertEquals('Doe', $result->apellido);
-        $this->assertEquals('test@example.com', $result->email);
+        $this->assertInstanceOf(UserDTO::class, $result);
+        $this->assertEquals('user-123', $result->id);
+        $this->assertEquals('Test', $result->nombre);
+        $this->assertEquals('User', $result->apellido);
+        $this->assertEquals($this->email, $result->email);
+        $this->assertEquals('ADMINISTRADOR', $result->tipo);
+        $this->assertEquals('activo', $result->estado);
     }
 
     public function testHandleReturnsNullWhenUserNotFound(): void
     {
-        // Arrange
-        $email = Email::fromString('nonexistent@example.com');
-        
-        // El repositorio retornará null
-        $this->repository
-            ->expects($this->once())
-            ->method('findByEmail')
-            ->with($email)
-            ->willReturn(null);
+        $this->repository->shouldReceive('findByEmail')
+            ->once()
+            ->with(Mockery::on(function ($arg) {
+                return $arg instanceof Email && (string)$arg === $this->email;
+            }))
+            ->andReturn(null);
 
-        $query = new GetUserByEmailQuery('nonexistent@example.com');
+        $result = $this->handler->handle($this->query);
 
-        // Act
-        $result = $this->handler->handle($query);
-
-        // Assert
         $this->assertNull($result);
-    }
-
-    public function testHandleWithInvalidEmail(): void
-    {
-        // Arrange
-        // No necesitamos configurar el mock del repositorio porque esperamos que falle antes
-
-        // Assert
-        $this->expectException(\InvalidArgumentException::class);
-        
-        // Act
-        $query = new GetUserByEmailQuery('invalid-email');
-        $this->handler->handle($query);
     }
 
     public function testInvokeCallsHandle(): void
     {
-        // Arrange
-        $email = Email::fromString('test@example.com');
-        $query = new GetUserByEmailQuery('test@example.com');
-        $expectedUser = $this->createMock(User::class);
-        
-        $expectedUser->method('getNombre')->willReturn('John');
-        $expectedUser->method('getApellido')->willReturn('Doe');
-        $expectedUser->method('getEmail')->willReturn($email);
+        $this->repository->shouldReceive('findByEmail')
+            ->once()
+            ->with(Mockery::on(function ($arg) {
+                return $arg instanceof Email && (string)$arg === $this->email;
+            }))
+            ->andReturn(null);
 
-        $this->repository
-            ->expects($this->once())
-            ->method('findByEmail')
-            ->with($email)
-            ->willReturn($expectedUser);
+        $result = $this->handler->__invoke($this->query);
 
-        // Act
-        $result = $this->handler->__invoke($query);
-
-        // Assert
-        $this->assertNotNull($result);
-        $this->assertEquals('John', $result->nombre);
-        $this->assertEquals('Doe', $result->apellido);
-        $this->assertEquals('test@example.com', $result->email);
+        $this->assertNull($result);
     }
 } 

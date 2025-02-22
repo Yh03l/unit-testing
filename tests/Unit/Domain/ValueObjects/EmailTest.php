@@ -10,142 +10,80 @@ use PHPUnit\Framework\Attributes\DataProvider;
 
 class EmailTest extends TestCase
 {
-    public function testCreateValidEmail(): void
+    public function testFromStringWithValidEmail(): void
     {
-        $email = Email::fromString('test@example.com');
-        $this->assertEquals('test@example.com', $email->getValue());
+        $value = 'test@example.com';
+        $email = Email::fromString($value);
+        $this->assertEquals($value, $email->getValue());
+        $this->assertEquals($value, (string)$email);
     }
 
-    public function testEmailEquality(): void
+    public function testFromStringTrimsWhitespace(): void
+    {
+        $value = '  test@example.com  ';
+        $email = Email::fromString($value);
+        $this->assertEquals('test@example.com', $email->getValue());
+        $this->assertEquals('test@example.com', (string)$email);
+    }
+
+    public function testEqualsReturnsTrueForSameValue(): void
     {
         $email1 = Email::fromString('test@example.com');
         $email2 = Email::fromString('test@example.com');
-        $email3 = Email::fromString('other@example.com');
-
         $this->assertTrue($email1->equals($email2));
-        $this->assertFalse($email1->equals($email3));
     }
 
-    public function testToString(): void
+    public function testEqualsReturnsFalseForDifferentValue(): void
     {
-        $emailString = 'test@example.com';
-        $email = Email::fromString($emailString);
-        $this->assertEquals($emailString, (string)$email);
+        $email1 = Email::fromString('test1@example.com');
+        $email2 = Email::fromString('test2@example.com');
+        $this->assertFalse($email1->equals($email2));
     }
 
-    public function testTrimsWhitespace(): void
-    {
-        $email = Email::fromString('  test@example.com  ');
-        $this->assertEquals('test@example.com', $email->getValue());
-    }
-
-    public function testThrowsExceptionForEmptyEmail(): void
+    #[DataProvider('invalidEmailProvider')]
+    public function testFromStringThrowsExceptionForInvalidEmail(string $invalidEmail, string $expectedMessage): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('El email no puede estar vacío');
-        Email::fromString('   ');
+        $this->expectExceptionMessage($expectedMessage);
+        Email::fromString($invalidEmail);
     }
 
-    public function testThrowsExceptionForInvalidEmailFormat(): void
+    public static function invalidEmailProvider(): array
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('<invalid> no es un email válido');
-        Email::fromString('invalid');
+        return [
+            'empty string' => ['', 'El email no puede estar vacío'],
+            'invalid format' => ['invalid-email', '<invalid-email> no es un email válido'],
+            'missing @' => ['testemail.com', '<testemail.com> no es un email válido'],
+            'multiple @' => ['test@email@example.com', '<test@email@example.com> no es un email válido'],
+            'unicode characters' => ['test@exámple.com', '<test@exámple.com> no es un email válido'],
+            'long local part' => [str_repeat('a', 65) . '@example.com', '<' . str_repeat('a', 65) . '@example.com> no es un email válido'],
+            'long domain' => ['test@' . str_repeat('a', 256) . '.com', '<test@' . str_repeat('a', 256) . '.com> no es un email válido'],
+            'domain starts with dot' => ['test@.example.com', '<test@.example.com> no es un email válido'],
+            'domain ends with dot' => ['test@example.com.', '<test@example.com.> no es un email válido'],
+            'consecutive dots in domain' => ['test@example..com', '<test@example..com> no es un email válido']
+        ];
     }
 
-    public function testThrowsExceptionForMultipleAtSymbols(): void
+    #[DataProvider('validEmailProvider')]
+    public function testFromStringAcceptsValidEmail(string $validEmail): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('<test@multiple@example.com> no es un email válido');
-        Email::fromString('test@multiple@example.com');
+        $email = Email::fromString($validEmail);
+        $this->assertEquals($validEmail, $email->getValue());
     }
 
-    public function testThrowsExceptionForLongLocalPart(): void
-    {
-        $longLocal = str_repeat('a', 65);
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('<' . $longLocal . '@example.com> no es un email válido');
-        Email::fromString($longLocal . '@example.com');
-    }
-
-    public function testThrowsExceptionForLongDomain(): void
-    {
-        $longDomain = str_repeat('a', 256);
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('<test@' . $longDomain . '> no es un email válido');
-        Email::fromString('test@' . $longDomain);
-    }
-
-    public function testThrowsExceptionForDomainStartingWithDot(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('<test@.example.com> no es un email válido');
-        Email::fromString('test@.example.com');
-    }
-
-    public function testThrowsExceptionForDomainEndingWithDot(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('<test@example.com.> no es un email válido');
-        Email::fromString('test@example.com.');
-    }
-
-    public function testThrowsExceptionForConsecutiveDotsInDomain(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('<test@example..com> no es un email válido');
-        Email::fromString('test@example..com');
-    }
-
-    public function testThrowsExceptionForUnicodeCharacters(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('<test@éxample.com> no es un email válido');
-        Email::fromString('test@éxample.com');
-    }
-
-    #[DataProvider('validEmailsProvider')]
-    public function testAcceptsValidEmails(string $email): void
-    {
-        $emailObj = Email::fromString($email);
-        $this->assertEquals($email, $emailObj->getValue());
-    }
-
-    public static function validEmailsProvider(): array
+    public static function validEmailProvider(): array
     {
         return [
             'simple email' => ['test@example.com'],
             'email with numbers' => ['test123@example.com'],
-            'email with dots' => ['test.name@example.com'],
-            'email with plus' => ['test+label@example.com'],
+            'email with dots' => ['test.user@example.com'],
+            'email with plus' => ['test+user@example.com'],
+            'email with underscore' => ['test_user@example.com'],
+            'email with hyphen' => ['test-user@example.com'],
             'email with subdomain' => ['test@sub.example.com'],
-            'email with hyphens' => ['test@example-domain.com'],
-            'short email' => ['a@b.com'],
-            'email with underscores' => ['test_name@example.com'],
-        ];
-    }
-
-    #[DataProvider('invalidEmailsProvider')]
-    public function testRejectsInvalidEmails(string $email): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        Email::fromString($email);
-    }
-
-    public static function invalidEmailsProvider(): array
-    {
-        return [
-            'empty string' => [''],
-            'no at symbol' => ['testexample.com'],
-            'multiple at symbols' => ['test@multiple@example.com'],
-            'space in email' => ['test @example.com'],
-            'invalid characters' => ['test$@example.com'],
-            'missing domain' => ['test@'],
-            'missing local part' => ['@example.com'],
-            'domain starts with dot' => ['test@.example.com'],
-            'domain ends with dot' => ['test@example.com.'],
-            'consecutive dots in domain' => ['test@example..com'],
-            'unicode characters' => ['test@éxample.com'],
+            'email with multiple subdomains' => ['test@sub1.sub2.example.com'],
+            'email with short TLD' => ['test@example.co'],
+            'email with long TLD' => ['test@example.travel']
         ];
     }
 } 

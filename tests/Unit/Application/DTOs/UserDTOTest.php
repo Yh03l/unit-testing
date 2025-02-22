@@ -10,43 +10,44 @@ use Commercial\Domain\Aggregates\User\Administrator;
 use Commercial\Domain\Aggregates\User\Patient;
 use Commercial\Domain\ValueObjects\Email;
 use DateTimeImmutable;
-use PHPUnit\Framework\TestCase;
+use Mockery;
+use Mockery\Adapter\Phpunit\MockeryTestCase;
 
-class UserDTOTest extends TestCase
+class UserDTOTest extends MockeryTestCase
 {
     private string $id;
     private string $nombre;
     private string $apellido;
-    private Email $email;
-    private string $estado;
+    private string $email;
+    private Email $emailVO;
 
     protected function setUp(): void
     {
         $this->id = 'user-123';
-        $this->nombre = 'John';
-        $this->apellido = 'Doe';
-        $this->email = Email::fromString('john.doe@example.com');
-        $this->estado = 'ACTIVO';
+        $this->nombre = 'Test';
+        $this->apellido = 'User';
+        $this->email = 'test@example.com';
+        $this->emailVO = Email::fromString($this->email);
     }
 
     public function testFromEntityWithBaseUser(): void
     {
-        $user = $this->createMock(User::class);
-        $user->method('getId')->willReturn($this->id);
-        $user->method('getNombre')->willReturn($this->nombre);
-        $user->method('getApellido')->willReturn($this->apellido);
-        $user->method('getEmail')->willReturn($this->email);
-        $user->method('getTipoUsuario')->willReturn('USER');
-        $user->method('getEstado')->willReturn($this->estado);
+        $user = Mockery::mock(User::class);
+        $user->shouldReceive('getId')->andReturn($this->id);
+        $user->shouldReceive('getNombre')->andReturn($this->nombre);
+        $user->shouldReceive('getApellido')->andReturn($this->apellido);
+        $user->shouldReceive('getEmail')->andReturn($this->emailVO);
+        $user->shouldReceive('getTipoUsuario')->andReturn('USUARIO');
+        $user->shouldReceive('getEstado')->andReturn('activo');
 
         $dto = UserDTO::fromEntity($user);
 
         $this->assertEquals($this->id, $dto->id);
         $this->assertEquals($this->nombre, $dto->nombre);
         $this->assertEquals($this->apellido, $dto->apellido);
-        $this->assertEquals($this->email->getValue(), $dto->email);
-        $this->assertEquals('USER', $dto->tipo);
-        $this->assertEquals($this->estado, $dto->estado);
+        $this->assertEquals($this->email, $dto->email);
+        $this->assertEquals('USUARIO', $dto->tipo);
+        $this->assertEquals('activo', $dto->estado);
         $this->assertNull($dto->cargo);
         $this->assertNull($dto->departamento);
         $this->assertNull($dto->fechaNacimiento);
@@ -57,156 +58,150 @@ class UserDTOTest extends TestCase
 
     public function testFromEntityWithAdministrator(): void
     {
-        $cargo = 'Director';
-        $departamento = 'Tecnología';
-
-        $admin = $this->createMock(Administrator::class);
-        $admin->method('getId')->willReturn($this->id);
-        $admin->method('getNombre')->willReturn($this->nombre);
-        $admin->method('getApellido')->willReturn($this->apellido);
-        $admin->method('getEmail')->willReturn($this->email);
-        $admin->method('getTipoUsuario')->willReturn('ADMINISTRADOR');
-        $admin->method('getEstado')->willReturn($this->estado);
-        $admin->method('getCargo')->willReturn($cargo);
-        $admin->method('getDepartamento')->willReturn($departamento);
+        $admin = Mockery::mock(Administrator::class);
+        $admin->shouldReceive('getId')->andReturn($this->id);
+        $admin->shouldReceive('getNombre')->andReturn($this->nombre);
+        $admin->shouldReceive('getApellido')->andReturn($this->apellido);
+        $admin->shouldReceive('getEmail')->andReturn($this->emailVO);
+        $admin->shouldReceive('getTipoUsuario')->andReturn('ADMINISTRADOR');
+        $admin->shouldReceive('getEstado')->andReturn('activo');
+        $admin->shouldReceive('getCargo')->andReturn('Gerente');
+        $admin->shouldReceive('getDepartamento')->andReturn('TI');
 
         $dto = UserDTO::fromEntity($admin);
 
         $this->assertEquals($this->id, $dto->id);
         $this->assertEquals($this->nombre, $dto->nombre);
         $this->assertEquals($this->apellido, $dto->apellido);
-        $this->assertEquals($this->email->getValue(), $dto->email);
+        $this->assertEquals($this->email, $dto->email);
         $this->assertEquals('ADMINISTRADOR', $dto->tipo);
-        $this->assertEquals($this->estado, $dto->estado);
-        $this->assertEquals($cargo, $dto->cargo);
-        $this->assertEquals($departamento, $dto->departamento);
+        $this->assertEquals('activo', $dto->estado);
+        $this->assertEquals('Gerente', $dto->cargo);
+        $this->assertEquals('TI', $dto->departamento);
+        $this->assertNull($dto->fechaNacimiento);
+        $this->assertNull($dto->genero);
+        $this->assertNull($dto->direccion);
+        $this->assertNull($dto->telefono);
     }
 
     public function testFromEntityWithPatient(): void
     {
         $fechaNacimiento = new DateTimeImmutable('1990-01-01');
-        $genero = 'M';
-        $direccion = 'Calle Principal 123';
-        $telefono = '1234567890';
-
-        $patient = $this->createMock(Patient::class);
-        $patient->method('getId')->willReturn($this->id);
-        $patient->method('getNombre')->willReturn($this->nombre);
-        $patient->method('getApellido')->willReturn($this->apellido);
-        $patient->method('getEmail')->willReturn($this->email);
-        $patient->method('getTipoUsuario')->willReturn('PACIENTE');
-        $patient->method('getEstado')->willReturn($this->estado);
-        $patient->method('getFechaNacimiento')->willReturn($fechaNacimiento);
-        $patient->method('getGenero')->willReturn($genero);
-        $patient->method('getDireccion')->willReturn($direccion);
-        $patient->method('getTelefono')->willReturn($telefono);
+        
+        $patient = Mockery::mock(Patient::class);
+        $patient->shouldReceive('getId')->andReturn($this->id);
+        $patient->shouldReceive('getNombre')->andReturn($this->nombre);
+        $patient->shouldReceive('getApellido')->andReturn($this->apellido);
+        $patient->shouldReceive('getEmail')->andReturn($this->emailVO);
+        $patient->shouldReceive('getTipoUsuario')->andReturn('PACIENTE');
+        $patient->shouldReceive('getEstado')->andReturn('activo');
+        $patient->shouldReceive('getFechaNacimiento')->andReturn($fechaNacimiento);
+        $patient->shouldReceive('getGenero')->andReturn('M');
+        $patient->shouldReceive('getDireccion')->andReturn('Calle 123');
+        $patient->shouldReceive('getTelefono')->andReturn('123456789');
 
         $dto = UserDTO::fromEntity($patient);
 
         $this->assertEquals($this->id, $dto->id);
         $this->assertEquals($this->nombre, $dto->nombre);
         $this->assertEquals($this->apellido, $dto->apellido);
-        $this->assertEquals($this->email->getValue(), $dto->email);
+        $this->assertEquals($this->email, $dto->email);
         $this->assertEquals('PACIENTE', $dto->tipo);
-        $this->assertEquals($this->estado, $dto->estado);
+        $this->assertEquals('activo', $dto->estado);
+        $this->assertNull($dto->cargo);
+        $this->assertNull($dto->departamento);
         $this->assertEquals($fechaNacimiento, $dto->fechaNacimiento);
-        $this->assertEquals($genero, $dto->genero);
-        $this->assertEquals($direccion, $dto->direccion);
-        $this->assertEquals($telefono, $dto->telefono);
+        $this->assertEquals('M', $dto->genero);
+        $this->assertEquals('Calle 123', $dto->direccion);
+        $this->assertEquals('123456789', $dto->telefono);
     }
 
     public function testToArrayWithBaseUser(): void
     {
-        $user = $this->createMock(User::class);
-        $user->method('getId')->willReturn($this->id);
-        $user->method('getNombre')->willReturn($this->nombre);
-        $user->method('getApellido')->willReturn($this->apellido);
-        $user->method('getEmail')->willReturn($this->email);
-        $user->method('getTipoUsuario')->willReturn('USER');
-        $user->method('getEstado')->willReturn($this->estado);
+        $user = Mockery::mock(User::class);
+        $user->shouldReceive('getId')->andReturn($this->id);
+        $user->shouldReceive('getNombre')->andReturn($this->nombre);
+        $user->shouldReceive('getApellido')->andReturn($this->apellido);
+        $user->shouldReceive('getEmail')->andReturn($this->emailVO);
+        $user->shouldReceive('getTipoUsuario')->andReturn('USUARIO');
+        $user->shouldReceive('getEstado')->andReturn('activo');
 
         $dto = UserDTO::fromEntity($user);
         $array = $dto->toArray();
 
-        $expectedArray = [
+        $expected = [
             'id' => $this->id,
             'nombre' => $this->nombre,
             'apellido' => $this->apellido,
-            'email' => $this->email->getValue(),
-            'tipo' => 'USER',
-            'estado' => $this->estado
+            'email' => $this->email,
+            'tipo' => 'USUARIO',
+            'estado' => 'activo'
         ];
 
-        $this->assertEquals($expectedArray, $array);
+        $this->assertEquals($expected, $array);
     }
 
     public function testToArrayWithAdministrator(): void
     {
-        $cargo = 'Director';
-        $departamento = 'Tecnología';
-
-        $admin = $this->createMock(Administrator::class);
-        $admin->method('getId')->willReturn($this->id);
-        $admin->method('getNombre')->willReturn($this->nombre);
-        $admin->method('getApellido')->willReturn($this->apellido);
-        $admin->method('getEmail')->willReturn($this->email);
-        $admin->method('getTipoUsuario')->willReturn('ADMINISTRADOR');
-        $admin->method('getEstado')->willReturn($this->estado);
-        $admin->method('getCargo')->willReturn($cargo);
-        $admin->method('getDepartamento')->willReturn($departamento);
+        $admin = Mockery::mock(Administrator::class);
+        $admin->shouldReceive('getId')->andReturn($this->id);
+        $admin->shouldReceive('getNombre')->andReturn($this->nombre);
+        $admin->shouldReceive('getApellido')->andReturn($this->apellido);
+        $admin->shouldReceive('getEmail')->andReturn($this->emailVO);
+        $admin->shouldReceive('getTipoUsuario')->andReturn('ADMINISTRADOR');
+        $admin->shouldReceive('getEstado')->andReturn('activo');
+        $admin->shouldReceive('getCargo')->andReturn('Gerente');
+        $admin->shouldReceive('getDepartamento')->andReturn('TI');
 
         $dto = UserDTO::fromEntity($admin);
         $array = $dto->toArray();
 
-        $expectedArray = [
+        $expected = [
             'id' => $this->id,
             'nombre' => $this->nombre,
             'apellido' => $this->apellido,
-            'email' => $this->email->getValue(),
+            'email' => $this->email,
             'tipo' => 'ADMINISTRADOR',
-            'estado' => $this->estado,
-            'cargo' => $cargo,
-            'departamento' => $departamento
+            'estado' => 'activo',
+            'cargo' => 'Gerente',
+            'departamento' => 'TI'
         ];
 
-        $this->assertEquals($expectedArray, $array);
+        $this->assertEquals($expected, $array);
     }
 
     public function testToArrayWithPatient(): void
     {
         $fechaNacimiento = new DateTimeImmutable('1990-01-01');
-        $genero = 'M';
-        $direccion = 'Calle Principal 123';
-        $telefono = '1234567890';
-
-        $patient = $this->createMock(Patient::class);
-        $patient->method('getId')->willReturn($this->id);
-        $patient->method('getNombre')->willReturn($this->nombre);
-        $patient->method('getApellido')->willReturn($this->apellido);
-        $patient->method('getEmail')->willReturn($this->email);
-        $patient->method('getTipoUsuario')->willReturn('PACIENTE');
-        $patient->method('getEstado')->willReturn($this->estado);
-        $patient->method('getFechaNacimiento')->willReturn($fechaNacimiento);
-        $patient->method('getGenero')->willReturn($genero);
-        $patient->method('getDireccion')->willReturn($direccion);
-        $patient->method('getTelefono')->willReturn($telefono);
+        
+        $patient = Mockery::mock(Patient::class);
+        $patient->shouldReceive('getId')->andReturn($this->id);
+        $patient->shouldReceive('getNombre')->andReturn($this->nombre);
+        $patient->shouldReceive('getApellido')->andReturn($this->apellido);
+        $patient->shouldReceive('getEmail')->andReturn($this->emailVO);
+        $patient->shouldReceive('getTipoUsuario')->andReturn('PACIENTE');
+        $patient->shouldReceive('getEstado')->andReturn('activo');
+        $patient->shouldReceive('getFechaNacimiento')->andReturn($fechaNacimiento);
+        $patient->shouldReceive('getGenero')->andReturn('M');
+        $patient->shouldReceive('getDireccion')->andReturn('Calle 123');
+        $patient->shouldReceive('getTelefono')->andReturn('123456789');
 
         $dto = UserDTO::fromEntity($patient);
         $array = $dto->toArray();
 
-        $expectedArray = [
+        $expected = [
             'id' => $this->id,
             'nombre' => $this->nombre,
             'apellido' => $this->apellido,
-            'email' => $this->email->getValue(),
+            'email' => $this->email,
             'tipo' => 'PACIENTE',
-            'estado' => $this->estado,
+            'estado' => 'activo',
             'fecha_nacimiento' => '1990-01-01',
-            'genero' => $genero,
-            'direccion' => $direccion,
-            'telefono' => $telefono
+            'genero' => 'M',
+            'direccion' => 'Calle 123',
+            'telefono' => '123456789'
         ];
 
-        $this->assertEquals($expectedArray, $array);
+        $this->assertEquals($expected, $array);
     }
 }
