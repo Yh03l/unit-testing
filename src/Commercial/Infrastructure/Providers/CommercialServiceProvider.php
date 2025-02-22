@@ -57,8 +57,13 @@ class CommercialServiceProvider extends ServiceProvider
         // Publicar las migraciones si es necesario
         if ($this->app->runningInConsole()) {
             $this->publishes([
-                __DIR__.'/../Persistence/Migrations' => database_path('migrations'),
+                __DIR__.'/../Persistence/Migrations' => $this->getDatabasePath('migrations'),
             ], 'commercial-migrations');
         }
+    }
+
+    protected function getDatabasePath(string $path = ''): string
+    {
+        return database_path($path);
     }
 } 

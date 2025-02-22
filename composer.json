@@ -13,7 +13,9 @@
     "require-dev": {
         "behat/behat": "^3.18",
         "behat/mink-browserkit-driver": "^2.2",
+        "doctrine/dbal": "^4.2",
         "fakerphp/faker": "^1.23",
+        "illuminate/database": "*",
         "laravel/pail": "^1.1",
         "laravel/pint": "^1.13",
         "laravel/sail": "^1.26",
