@@ -1,0 +1,1321 @@
+{
+	"info": {
+		"_postman_id": "3e4ee0d5-3d15-4ea6-9bb5-f0cb80382249",
+		"name": "Gestión de Catálogo",
+		"description": "Colección para probar los endpoints de Gestión de Catálogo del sistema",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "31905754"
+	},
+	"item": [
+		{
+			"name": "Gestión de Catálogos",
+			"item": [
+				{
+					"name": "Crear Catálogo",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {\r",
+									"    pm.response.to.have.status(201);\r",
+									"});\r",
+									"pm.sendRequest('http://localhost:8000/api/v1/catalogs', function (err, res) {\r",
+									"    if (res.code === 200) {\r",
+									"        const nombreCatalogo = pm.collectionVariables.get('nombreNuevoCatalogo');\r",
+									"        const jsonData = res.json();\r",
+									"\r",
+									"        pm.test(\"Verificación: Catálogo registrado correctamente.\", function () {\r",
+									"            // Buscar el catálogo que coincida con el nombre\r",
+									"            const catalogoEncontrado = jsonData.find(catalogo => \r",
+									"                catalogo.nombre === nombreCatalogo\r",
+									"            );\r",
+									"            \r",
+									"            // Verificar que se encontró el catálogo\r",
+									"            pm.expect(catalogoEncontrado).to.not.be.undefined;\r",
+									"            \r",
+									"            // Guardar el ID en la variable de colección\r",
+									"            pm.collectionVariables.set('catalogoId', catalogoEncontrado.id);\r",
+									"            \r",
+									"            // Test adicional para verificar que el ID se guardó\r",
+									"            console.log('ID guardado:', catalogoEncontrado.id);\r",
+									"            console.log('Catalogo:', catalogoEncontrado.nombre);\r",
+									"        });\r",
+									"    }\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const nombreRandom = pm.variables.replaceIn('{{$randomWord}}'); // Una palabra aleatoria\r",
+									"const nombreCatalogo = `Catálogo_${nombreRandom}`;\r",
+									"pm.collectionVariables.set(\"nombreNuevoCatalogo\", nombreCatalogo);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"{{nombreNuevoCatalogo}}\",\n    \"estado\": \"activo\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/catalogs",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"catalogs"
+							]
+						},
+						"description": "Crea un nuevo catálogo"
+					},
+					"response": [
+						{
+							"name": "Status 201",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"nombre\": \"{{nombreNuevoCatalogo}}\",\n    \"estado\": \"activo\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/catalogs",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"catalogs"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Host",
+									"value": "127.0.0.1:8000"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								},
+								{
+									"key": "X-Powered-By",
+									"value": "PHP/8.2.18"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, private"
+								},
+								{
+									"key": "Date",
+									"value": "Mon, 24 Feb 2025 02:34:40 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Catálogo creado exitosamente\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Obtener Catálogo",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response tiene la estructura correcta\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('object');",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('nombre');",
+									"    pm.expect(jsonData).to.have.property('estado');",
+									"});",
+									"",
+									"pm.test(\"ID del catálogo coincide con el solicitado\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.id).to.eql(pm.variables.get('catalogoId'));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/catalogs/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"catalogs",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "{{catalogoId}}",
+									"description": "ID del catálogo"
+								}
+							]
+						},
+						"description": "Obtiene un catálogo específico por su ID"
+					},
+					"response": [
+						{
+							"name": "Status 200",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/catalogs/:id",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"catalogs",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "{{catalogoId}}",
+											"description": "ID del catálogo"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Host",
+									"value": "127.0.0.1:8000"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								},
+								{
+									"key": "X-Powered-By",
+									"value": "PHP/8.2.18"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, private"
+								},
+								{
+									"key": "Date",
+									"value": "Mon, 24 Feb 2025 02:35:06 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": \"319a572b-86ce-45ae-a051-58b44463a8de\",\n    \"nombre\": \"Catálogo_implement\",\n    \"estado\": \"activo\",\n    \"services\": []\n}"
+						}
+					]
+				},
+				{
+					"name": "Listar Catálogos",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response es un array\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Cada catálogo tiene la estructura correcta\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.length > 0) {",
+									"        const primerCatalogo = jsonData[0];",
+									"        pm.expect(primerCatalogo).to.have.property('id');",
+									"        pm.expect(primerCatalogo).to.have.property('nombre');",
+									"        pm.expect(primerCatalogo).to.have.property('estado');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/catalogs",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"catalogs"
+							]
+						},
+						"description": "Obtiene la lista de todos los catálogos"
+					},
+					"response": [
+						{
+							"name": "Status 200",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/catalogs",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"catalogs"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Host",
+									"value": "127.0.0.1:8000"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								},
+								{
+									"key": "X-Powered-By",
+									"value": "PHP/8.2.18"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, private"
+								},
+								{
+									"key": "Date",
+									"value": "Mon, 24 Feb 2025 02:35:19 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"id\": \"91312c81-fca6-41dc-984c-ce9f973da82d\",\n        \"nombre\": \"Catálogo Actualizado\",\n        \"estado\": \"activo\",\n        \"services\": []\n    },\n    {\n        \"id\": \"3118db21-4953-4f1a-a8dc-541d60f7621a\",\n        \"nombre\": \"Nuevo Catálogo nutricional\",\n        \"estado\": \"activo\",\n        \"services\": []\n    },\n    {\n        \"id\": \"c54f4e88-2bab-4cb5-bad2-236a7bed63e3\",\n        \"nombre\": \"Nuevo Catálogo nutricional\",\n        \"estado\": \"activo\",\n        \"services\": []\n    },\n    {\n        \"id\": \"2f7870e6-4877-4249-a5ff-3f505ef5e6fc\",\n        \"nombre\": \"Nuevo Catálogo nutricional\",\n        \"estado\": \"activo\",\n        \"services\": []\n    },\n    {\n        \"id\": \"bf573f43-f9b2-4fa5-a8bb-81ac41699e42\",\n        \"nombre\": \"Nuevo Catálogo nutricional\",\n        \"estado\": \"activo\",\n        \"services\": []\n    },\n    {\n        \"id\": \"373b9e9b-18be-4587-8965-102c2dc7dc48\",\n        \"nombre\": \"Nuevo Catálogo nutricional\",\n        \"estado\": \"activo\",\n        \"services\": []\n    },\n    {\n        \"id\": \"c146b5da-4eeb-4fa8-9c89-4fb509102a2e\",\n        \"nombre\": \"Nuevo Catálogo nutricional\",\n        \"estado\": \"activo\",\n        \"services\": []\n    },\n    {\n        \"id\": \"43cd36ba-0a0a-42e9-9935-7e153c2f34de\",\n        \"nombre\": \"Nuevo Catálogo nutricional\",\n        \"estado\": \"activo\",\n        \"services\": []\n    },\n    {\n        \"id\": \"8031ecf6-6ad3-4413-822d-9da02e3e5798\",\n        \"nombre\": \"Nombre catalogo\",\n        \"estado\": \"activo\",\n        \"services\": []\n    },\n    {\n        \"id\": \"09f90624-a477-4db4-94bb-98baad938fc5\",\n        \"nombre\": \"Nombre catalogo\",\n        \"estado\": \"activo\",\n        \"services\": []\n    },\n    {\n        \"id\": \"e86a3450-ca41-4fcf-b0d1-e2c047c3ce61\",\n        \"nombre\": \"Nombre catalogo\",\n        \"estado\": \"activo\",\n        \"services\": []\n    },\n    {\n        \"id\": \"621f67bd-3540-43af-ae3d-2dff959c0d6a\",\n        \"nombre\": \"Nombre catalogo\",\n        \"estado\": \"activo\",\n        \"services\": []\n    },\n    {\n        \"id\": \"051374b3-5492-418c-a630-4930d619e89a\",\n        \"nombre\": \"Nombre catalogo\",\n        \"estado\": \"activo\",\n        \"services\": []\n    },\n    {\n        \"id\": \"edc4601d-58a3-428d-a0bc-2ce32cd0d31a\",\n        \"nombre\": \"Nombre catalogo\",\n        \"estado\": \"activo\",\n        \"services\": []\n    },\n    {\n        \"id\": \"575bbfdf-92af-474a-b58d-e6f381b111b3\",\n        \"nombre\": \"Nombre catalogo\",\n        \"estado\": \"activo\",\n        \"services\": []\n    },\n    {\n        \"id\": \"4ec309aa-87e7-41ac-8149-7f45f5044da7\",\n        \"nombre\": \"Nombre catalogo\",\n        \"estado\": \"activo\",\n        \"services\": []\n    },\n    {\n        \"id\": \"fafbc3aa-78dc-402f-b87f-c529fe8e286a\",\n        \"nombre\": \"Catálogo_interactive\",\n        \"estado\": \"activo\",\n        \"services\": []\n    },\n    {\n        \"id\": \"ebb10fdf-ef62-41bc-87b8-f69889a044a4\",\n        \"nombre\": \"Catálogo_Synergistic\",\n        \"estado\": \"activo\",\n        \"services\": []\n    },\n    {\n        \"id\": \"f1d36108-971e-48b6-8723-74a3c1ae87f3\",\n        \"nombre\": \"Catálogo_Checking\",\n        \"estado\": \"activo\",\n        \"services\": []\n    },\n    {\n        \"id\": \"5194b04a-aa46-422b-9037-849ea90f54ea\",\n        \"nombre\": \"Catálogo_Actualizado_budgetary\",\n        \"estado\": \"activo\",\n        \"services\": []\n    },\n    {\n        \"id\": \"319a572b-86ce-45ae-a051-58b44463a8de\",\n        \"nombre\": \"Catálogo_implement\",\n        \"estado\": \"activo\",\n        \"services\": []\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "Actualizar Catálogo",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const nombreActualizado = `Catálogo_Actualizado_${pm.variables.replaceIn('{{$randomWord}}')}`;",
+									"pm.variables.set('nombreCatalogoActualizado', nombreActualizado);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response tiene el mensaje correcto\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.eql(\"Catálogo actualizado exitosamente\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"{{nombreCatalogoActualizado}}\",\n    \"estado\": \"activo\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/catalogs/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"catalogs",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "{{catalogoId}}",
+									"description": "ID del catálogo"
+								}
+							]
+						},
+						"description": "Actualiza un catálogo existente"
+					},
+					"response": [
+						{
+							"name": "Status 200",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "text/plain",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"nombre\": \"{{nombreCatalogoActualizado}}\",\n    \"estado\": \"activo\"\n}",
+									"options": {
+										"raw": {
+											"language": "text"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/catalogs/:id",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"catalogs",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "{{catalogoId}}",
+											"description": "ID del catálogo"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Host",
+									"value": "127.0.0.1:8000"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								},
+								{
+									"key": "X-Powered-By",
+									"value": "PHP/8.2.18"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, private"
+								},
+								{
+									"key": "Date",
+									"value": "Mon, 24 Feb 2025 02:35:34 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Catálogo actualizado exitosamente\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Eliminar Catálogo",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 204\", function () {",
+									"    pm.response.to.have.status(204);",
+									"});",
+									"",
+									"// Verificar que el catálogo ya no existe",
+									"pm.sendRequest({",
+									"    url: pm.variables.get('base_url') + '/catalogs/' + pm.variables.get('catalogoId'),",
+									"    method: 'GET'",
+									"}, function (err, res) {",
+									"    pm.test(\"El catálogo fue eliminado correctamente\", function () {",
+									"        pm.expect(res).to.have.property('code', 404);",
+									"    });",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/catalogs/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"catalogs",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "{{catalogoId}}",
+									"description": "ID del catálogo"
+								}
+							]
+						},
+						"description": "Elimina un catálogo existente"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Gestión de Servicios",
+			"item": [
+				{
+					"name": "Crear Servicio",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const nombreServicio = `Servicio_${pm.variables.replaceIn('{{$randomWord}}')}`;",
+									"pm.collectionVariables.set('nombreNuevoServicio', nombreServicio);"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Response tiene el mensaje correcto\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.eql(\"Servicio creado exitosamente\");",
+									"});",
+									"",
+									"// Verificar que el servicio fue creado",
+									"pm.sendRequest({",
+									"    url: pm.variables.get('base_url') + '/services',",
+									"    method: 'GET'",
+									"}, function (err, res) {",
+									"    if (res.code === 200) {",
+									"        const jsonData = res.json();",
+									"        const nombreServicio = pm.collectionVariables.get('nombreNuevoServicio');",
+									"",
+									"        pm.test(\"Verificación: Servicio registrado correctamente\", function () {",
+									"            const servicioEncontrado = jsonData.data.find(servicio => ",
+									"                servicio.nombre === nombreServicio",
+									"            );",
+									"            ",
+									"            pm.expect(servicioEncontrado).to.not.be.undefined;",
+									"            pm.expect(servicioEncontrado.estado).to.eql('activo');",
+									"            pm.expect(servicioEncontrado.monto).to.be.a('number');",
+									"            pm.expect(servicioEncontrado.moneda).to.eql('USD');",
+									"            ",
+									"            // Guardar el ID para pruebas posteriores",
+									"            pm.collectionVariables.set('servicioId', servicioEncontrado.id);",
+									"        });",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"{{nombreNuevoServicio}}\",\n    \"descripcion\": \"Servicio de prueba automatizado\",\n    \"monto\": 150.00,\n    \"moneda\": \"USD\",\n    \"vigencia\": \"2025-03-31T23:59:59Z\",\n    \"tipo_servicio_id\": \"asesoramiento\",\n    \"catalogo_id\": \"{{catalogoId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/services",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"services"
+							]
+						},
+						"description": "Crea un nuevo servicio"
+					},
+					"response": [
+						{
+							"name": "Status 201",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"nombre\": \"{{nombreNuevoServicio}}\",\n    \"descripcion\": \"Servicio de prueba automatizado\",\n    \"monto\": 150.00,\n    \"moneda\": \"USD\",\n    \"vigencia\": \"2025-03-31T23:59:59Z\",\n    \"tipo_servicio_id\": \"asesoramiento\",\n    \"catalogo_id\": \"{{catalogoId}}\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/services",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"services"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Host",
+									"value": "127.0.0.1:8000"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								},
+								{
+									"key": "X-Powered-By",
+									"value": "PHP/8.2.18"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, private"
+								},
+								{
+									"key": "Date",
+									"value": "Mon, 24 Feb 2025 02:35:57 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Servicio creado exitosamente\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Obtener Servicio",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response tiene la estructura correcta\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('data');",
+									"    const servicio = jsonData.data;",
+									"    ",
+									"    // Verificar estructura completa",
+									"    pm.expect(servicio).to.have.property('id');",
+									"    pm.expect(servicio).to.have.property('nombre');",
+									"    pm.expect(servicio).to.have.property('descripcion');",
+									"    pm.expect(servicio).to.have.property('monto');",
+									"    pm.expect(servicio).to.have.property('moneda');",
+									"    pm.expect(servicio).to.have.property('tipo_servicio_id');",
+									"    pm.expect(servicio).to.have.property('estado');",
+									"    pm.expect(servicio).to.have.property('catalogo_id');",
+									"    pm.expect(servicio).to.have.property('vigencia');",
+									"});",
+									"",
+									"pm.test(\"Datos del servicio son válidos\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    const servicio = jsonData.data;",
+									"    ",
+									"    // Verificar tipos de datos",
+									"    pm.expect(servicio.id).to.be.a('string');",
+									"    pm.expect(servicio.monto).to.be.a('number');",
+									"    pm.expect(servicio.estado).to.be.oneOf(['activo', 'inactivo']);",
+									"    pm.expect(servicio.vigencia).to.be.an('object');",
+									"    ",
+									"    // Verificar ID específico",
+									"    pm.expect(servicio.id).to.eql(pm.variables.get('servicioId'));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/services/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"services",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "{{servicioId}}",
+									"description": "ID del servicio"
+								}
+							]
+						},
+						"description": "Obtiene un servicio específico por su ID"
+					},
+					"response": [
+						{
+							"name": "Status 200",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/services/:id",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"services",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "{{servicioId}}",
+											"description": "ID del servicio"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Host",
+									"value": "127.0.0.1:8000"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								},
+								{
+									"key": "X-Powered-By",
+									"value": "PHP/8.2.18"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, private"
+								},
+								{
+									"key": "Date",
+									"value": "Mon, 24 Feb 2025 02:36:09 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"data\": {\n        \"id\": \"dfcf88f7-0049-47c6-817c-1954d05fe06d\",\n        \"nombre\": \"Consulta Nutricional Actualizada\",\n        \"descripcion\": \"Descripción actualizada\",\n        \"monto\": 150,\n        \"moneda\": \"USD\",\n        \"tipo_servicio_id\": \"asesoramiento\",\n        \"estado\": \"activo\",\n        \"catalogo_id\": \"91312c81-fca6-41dc-984c-ce9f973da82d\",\n        \"vigencia\": {\n            \"date\": \"2025-03-31 00:00:00.000000\",\n            \"timezone_type\": 3,\n            \"timezone\": \"UTC\"\n        }\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Listar Servicios Activos",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response tiene la estructura correcta\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('data');",
+									"    pm.expect(jsonData.data).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Todos los servicios están activos y tienen la estructura correcta\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    const servicios = jsonData.data;",
+									"    ",
+									"    servicios.forEach(servicio => {",
+									"        // Verificar estado activo",
+									"        pm.expect(servicio.estado).to.eql('activo');",
+									"        ",
+									"        // Verificar estructura básica",
+									"        pm.expect(servicio).to.include.all.keys(",
+									"            'id',",
+									"            'nombre',",
+									"            'descripcion',",
+									"            'monto',",
+									"            'moneda',",
+									"            'tipo_servicio_id',",
+									"            'estado',",
+									"            'catalogo_id',",
+									"            'vigencia'",
+									"        );",
+									"        ",
+									"        // Verificar tipos de datos",
+									"        pm.expect(servicio.id).to.be.a('string');",
+									"        pm.expect(servicio.monto).to.be.a('number');",
+									"        pm.expect(servicio.vigencia).to.be.an('object');",
+									"    });",
+									"});",
+									"",
+									"pm.test(\"La vigencia de los servicios es válida\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    const servicios = jsonData.data;",
+									"    const fechaActual = new Date();",
+									"    ",
+									"    servicios.forEach(servicio => {",
+									"        const fechaVigencia = new Date(servicio.vigencia.date);",
+									"        pm.expect(fechaVigencia.getTime()).to.be.above(fechaActual.getTime());",
+									"    });",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/services",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"services"
+							]
+						},
+						"description": "Obtiene la lista de servicios activos"
+					},
+					"response": [
+						{
+							"name": "Status 200",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/services",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"services"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Host",
+									"value": "127.0.0.1:8000"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								},
+								{
+									"key": "X-Powered-By",
+									"value": "PHP/8.2.18"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, private"
+								},
+								{
+									"key": "Date",
+									"value": "Mon, 24 Feb 2025 02:36:24 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"data\": [\n        {\n            \"id\": \"dfcf88f7-0049-47c6-817c-1954d05fe06d\",\n            \"nombre\": \"Consulta Nutricional Actualizada\",\n            \"descripcion\": \"Descripción actualizada\",\n            \"monto\": 150,\n            \"moneda\": \"USD\",\n            \"tipo_servicio_id\": \"asesoramiento\",\n            \"estado\": \"activo\",\n            \"catalogo_id\": \"91312c81-fca6-41dc-984c-ce9f973da82d\",\n            \"vigencia\": {\n                \"date\": \"2025-03-31 00:00:00.000000\",\n                \"timezone_type\": 3,\n                \"timezone\": \"UTC\"\n            }\n        },\n        {\n            \"id\": \"99fa5b47-7caa-432b-b00e-83f2263c75a6\",\n            \"nombre\": \"Consulta Nutricional 2\",\n            \"descripcion\": \"Consulta nutricional personalizada 2\",\n            \"monto\": 150,\n            \"moneda\": \"USD\",\n            \"tipo_servicio_id\": \"asesoramiento\",\n            \"estado\": \"activo\",\n            \"catalogo_id\": \"91312c81-fca6-41dc-984c-ce9f973da82d\",\n            \"vigencia\": {\n                \"date\": \"2025-03-31 00:00:00.000000\",\n                \"timezone_type\": 3,\n                \"timezone\": \"UTC\"\n            }\n        },\n        {\n            \"id\": \"ea536349-42dd-4d2a-ade9-612ae50bd64a\",\n            \"nombre\": \"Consulta Nutricional 2\",\n            \"descripcion\": \"Consulta nutricional personalizada 2\",\n            \"monto\": 150,\n            \"moneda\": \"USD\",\n            \"tipo_servicio_id\": \"asesoramiento\",\n            \"estado\": \"activo\",\n            \"catalogo_id\": \"91312c81-fca6-41dc-984c-ce9f973da82d\",\n            \"vigencia\": {\n                \"date\": \"2025-03-31 00:00:00.000000\",\n                \"timezone_type\": 3,\n                \"timezone\": \"UTC\"\n            }\n        }\n    ]\n}"
+						}
+					]
+				},
+				{
+					"name": "Actualizar Servicio",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const nombreActualizado = `Servicio_Actualizado_${pm.variables.replaceIn('{{$randomWord}}')}`;",
+									"pm.variables.set('nombreServicioActualizado', nombreActualizado);"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response tiene el mensaje correcto\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.eql(\"Servicio actualizado exitosamente\");",
+									"});",
+									"",
+									"// Verificar que el servicio se actualizó correctamente",
+									"pm.sendRequest({",
+									"    url: pm.variables.get('base_url') + '/services/' + pm.variables.get('servicioId'),",
+									"    method: 'GET'",
+									"}, function (err, res) {",
+									"    if (res.code === 200) {",
+									"        const jsonData = res.json();",
+									"        const servicio = jsonData.data;",
+									"        ",
+									"        pm.test(\"Servicio actualizado correctamente\", function () {",
+									"            pm.expect(servicio.nombre).to.eql(pm.variables.get('nombreServicioActualizado'));",
+									"            pm.expect(servicio.descripcion).to.eql(\"Descripción actualizada de prueba\");",
+									"        });",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"{{nombreServicioActualizado}}\",\n    \"descripcion\": \"Descripción actualizada de prueba\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/services/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"services",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "{{servicioId}}",
+									"description": "ID del servicio"
+								}
+							]
+						},
+						"description": "Actualiza un servicio existente"
+					},
+					"response": [
+						{
+							"name": "Status 200",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"nombre\": \"{{nombreServicioActualizado}}\",\n    \"descripcion\": \"Descripción actualizada de prueba\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/services/:id",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"services",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "{{servicioId}}",
+											"description": "ID del servicio"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Host",
+									"value": "127.0.0.1:8000"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								},
+								{
+									"key": "X-Powered-By",
+									"value": "PHP/8.2.18"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, private"
+								},
+								{
+									"key": "Date",
+									"value": "Mon, 24 Feb 2025 02:36:35 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Servicio actualizado exitosamente\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Actualizar Estado de Servicio",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response tiene el mensaje correcto\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.eql(\"Estado del servicio actualizado exitosamente\");",
+									"});",
+									"",
+									"// Verificar que el estado se actualizó correctamente",
+									"pm.sendRequest({",
+									"    url: pm.variables.get('base_url') + '/services/' + pm.variables.get('servicioId'),",
+									"    method: 'GET'",
+									"}, function (err, res) {",
+									"    if (res.code === 200) {",
+									"        const jsonData = res.json();",
+									"        const servicio = jsonData.data;",
+									"        ",
+									"        pm.test(\"Estado del servicio actualizado correctamente\", function () {",
+									"            const estadoEsperado = JSON.parse(pm.request.body.raw).estado;",
+									"            pm.expect(servicio.estado).to.eql(estadoEsperado);",
+									"        });",
+									"    }",
+									"});",
+									"",
+									"// Verificar que el servicio aparece en la lista correcta según su estado",
+									"pm.sendRequest({",
+									"    url: pm.variables.get('base_url') + '/services',",
+									"    method: 'GET'",
+									"}, function (err, res) {",
+									"    if (res.code === 200) {",
+									"        const jsonData = res.json();",
+									"        const servicios = jsonData.data;",
+									"        const servicioId = pm.variables.get('servicioId');",
+									"        const estadoActual = JSON.parse(pm.request.body.raw).estado;",
+									"        ",
+									"        pm.test(\"Servicio aparece en la lista correcta\", function () {",
+									"            if (estadoActual === 'activo') {",
+									"                const encontrado = servicios.some(s => s.id === servicioId);",
+									"                pm.expect(encontrado).to.be.true;",
+									"            }",
+									"        });",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"estado\": \"activo\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/services/:id/status",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"services",
+								":id",
+								"status"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "{{servicioId}}",
+									"description": "ID del servicio"
+								}
+							]
+						},
+						"description": "Actualiza el estado de un servicio"
+					},
+					"response": [
+						{
+							"name": "Status 200",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"estado\": \"activo\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/services/:id/status",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"services",
+										":id",
+										"status"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "{{servicioId}}",
+											"description": "ID del servicio"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Host",
+									"value": "127.0.0.1:8000"
+								},
+								{
+									"key": "Connection",
+									"value": "close"
+								},
+								{
+									"key": "X-Powered-By",
+									"value": "PHP/8.2.18"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, private"
+								},
+								{
+									"key": "Date",
+									"value": "Mon, 24 Feb 2025 02:36:47 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Estado del servicio actualizado exitosamente\"\n}"
+						}
+					]
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000/api/v1",
+			"type": "string"
+		},
+		{
+			"key": "catalogoId",
+			"value": "91312c81-fca6-41dc-984c-ce9f973da82d",
+			"type": "default"
+		},
+		{
+			"key": "servicioId",
+			"value": "dfcf88f7-0049-47c6-817c-1954d05fe06d",
+			"type": "default"
+		},
+		{
+			"key": "nombreNuevoCatalogo",
+			"value": "Catálogo de servicio nutricional ",
+			"type": "default"
+		},
+		{
+			"key": "nombreCatalogoActualizado",
+			"value": "Catálogo de servicio nutricional actualizado",
+			"type": "string"
+		},
+		{
+			"key": "nombreNuevoServicio",
+			"value": "Nuevo servicio nutricional",
+			"type": "string"
+		},
+		{
+			"key": "nombreServicioActualizado",
+			"value": "Servicio nutricional V2",
+			"type": "string"
+		}
+	]
+}
