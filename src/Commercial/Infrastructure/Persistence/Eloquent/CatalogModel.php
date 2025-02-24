@@ -31,20 +31,35 @@ class CatalogModel extends Model
         'deleted_at' => 'datetime'
     ];
 
-    protected static function boot()
+    protected static function boot(): void
     {
         parent::boot();
+    }
 
-        static::saving(function ($model) {
-            $validStates = [
-                ServiceStatus::ACTIVO->toString(),
-                ServiceStatus::INACTIVO->toString()
-            ];
-            
-            if (!in_array($model->estado, $validStates)) {
-                throw new \InvalidArgumentException('Estado de catálogo inválido');
-            }
-        });
+    public function save(array $options = []): bool
+    {
+        $this->validateState();
+        return parent::save($options);
+    }
+
+    protected function validateState(): void
+    {
+        $validStates = [
+            ServiceStatus::ACTIVO->toString(),
+            ServiceStatus::INACTIVO->toString()
+        ];
+        
+        if (empty($this->estado)) {
+            throw new \InvalidArgumentException('El estado del catálogo no puede estar vacío');
+        }
+
+        if (!is_string($this->estado)) {
+            throw new \InvalidArgumentException('El estado del catálogo debe ser una cadena de texto');
+        }
+
+        if (!in_array($this->estado, $validStates, true)) {
+            throw new \InvalidArgumentException('Estado de catálogo inválido');
+        }
     }
 
     public function services(): HasMany

@@ -8,11 +8,9 @@ use Commercial\Infrastructure\Persistence\Eloquent\EloquentCatalogRepository;
 use Commercial\Infrastructure\Persistence\Eloquent\CatalogModel;
 use Commercial\Domain\Aggregates\Catalog\Catalog;
 use Commercial\Domain\ValueObjects\ServiceStatus;
-use Mockery;
-use Mockery\Adapter\Phpunit\MockeryTestCase;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Schema\Blueprint;
 
-class EloquentCatalogRepositoryTest extends MockeryTestCase
+class EloquentCatalogRepositoryTest extends BaseModelTest
 {
     private EloquentCatalogRepository $repository;
 
@@ -22,89 +20,86 @@ class EloquentCatalogRepositoryTest extends MockeryTestCase
         $this->repository = new EloquentCatalogRepository();
     }
 
+    protected function createTables(): void
+    {
+        $this->schema->create('catalogos', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->string('nombre');
+            $table->string('estado');
+            $table->timestamps();
+            $table->softDeletes();
+        });
+    }
+
     public function testSaveCreatesCatalogModel(): void
     {
+        // Arrange
         $catalog = Catalog::create(
             'test-id',
             'Test Catalog',
             ServiceStatus::ACTIVO
         );
 
-        // Mock de la clase CatalogModel usando Mockery
-        $modelMock = Mockery::mock('alias:' . CatalogModel::class);
-        $modelMock->shouldReceive('updateOrCreate')
-            ->once()
-            ->with(
-                ['id' => $catalog->getId()],
-                [
-                    'nombre' => $catalog->getNombre(),
-                    'estado' => $catalog->getEstado()->toString()
-                ]
-            );
-
+        // Act
         $this->repository->save($catalog);
+
+        // Assert
+        $savedModel = CatalogModel::find('test-id');
+        $this->assertNotNull($savedModel);
+        $this->assertEquals('Test Catalog', $savedModel->nombre);
+        $this->assertEquals(ServiceStatus::ACTIVO->toString(), $savedModel->estado);
     }
 
     public function testFindByIdReturnsCatalogWhenExists(): void
     {
-        $id = 'test-id';
-        $modelMock = Mockery::mock('alias:' . CatalogModel::class);
-        
-        $catalogModel = new CatalogModel();
-        $catalogModel->id = $id;
-        $catalogModel->nombre = 'Test Catalog';
-        $catalogModel->estado = ServiceStatus::ACTIVO->toString();
+        // Arrange
+        $model = new CatalogModel([
+            'id' => 'test-id',
+            'nombre' => 'Test Catalog',
+            'estado' => ServiceStatus::ACTIVO->toString()
+        ]);
+        $model->save();
 
-        $modelMock->shouldReceive('find')
-            ->once()
-            ->with($id)
-            ->andReturn($catalogModel);
+        // Act
+        $result = $this->repository->findById('test-id');
 
-        $result = $this->repository->findById($id);
-
+        // Assert
         $this->assertInstanceOf(Catalog::class, $result);
-        $this->assertEquals($id, $result->getId());
+        $this->assertEquals('test-id', $result->getId());
         $this->assertEquals('Test Catalog', $result->getNombre());
         $this->assertEquals(ServiceStatus::ACTIVO, $result->getEstado());
     }
 
     public function testFindByIdReturnsNullWhenNotExists(): void
     {
-        $id = 'non-existent-id';
-        $modelMock = Mockery::mock('alias:' . CatalogModel::class);
-        
-        $modelMock->shouldReceive('find')
-            ->once()
-            ->with($id)
-            ->andReturn(null);
+        // Act
+        $result = $this->repository->findById('non-existent-id');
 
-        $result = $this->repository->findById($id);
-
+        // Assert
         $this->assertNull($result);
     }
 
     public function testFindAllReturnsAllCatalogs(): void
     {
-        $modelMock = Mockery::mock('alias:' . CatalogModel::class);
-        
-        $catalog1 = new CatalogModel();
-        $catalog1->id = 'test-id-1';
-        $catalog1->nombre = 'Test Catalog 1';
-        $catalog1->estado = ServiceStatus::ACTIVO->toString();
+        // Arrange
+        $catalog1 = new CatalogModel([
+            'id' => 'test-id-1',
+            'nombre' => 'Test Catalog 1',
+            'estado' => ServiceStatus::ACTIVO->toString()
+        ]);
+        $catalog1->save();
 
-        $catalog2 = new CatalogModel();
-        $catalog2->id = 'test-id-2';
-        $catalog2->nombre = 'Test Catalog 2';
-        $catalog2->estado = ServiceStatus::INACTIVO->toString();
+        $catalog2 = new CatalogModel([
+            'id' => 'test-id-2',
+            'nombre' => 'Test Catalog 2',
+            'estado' => ServiceStatus::INACTIVO->toString()
+        ]);
+        $catalog2->save();
 
-        $collection = new Collection([$catalog1, $catalog2]);
-
-        $modelMock->shouldReceive('all')
-            ->once()
-            ->andReturn($collection);
-
+        // Act
         $results = $this->repository->findAll();
 
+        // Assert
         $this->assertCount(2, $results);
         $this->assertContainsOnlyInstancesOf(Catalog::class, $results);
         
@@ -119,13 +114,18 @@ class EloquentCatalogRepositoryTest extends MockeryTestCase
 
     public function testDeleteRemovesCatalog(): void
     {
-        $id = 'test-id';
-        $modelMock = Mockery::mock('alias:' . CatalogModel::class);
-        
-        $modelMock->shouldReceive('destroy')
-            ->once()
-            ->with($id);
+        // Arrange
+        $model = new CatalogModel([
+            'id' => 'test-id',
+            'nombre' => 'Test Catalog',
+            'estado' => ServiceStatus::ACTIVO->toString()
+        ]);
+        $model->save();
 
-        $this->repository->delete($id);
+        // Act
+        $this->repository->delete('test-id');
+
+        // Assert
+        $this->assertNull(CatalogModel::find('test-id'));
     }
 } 

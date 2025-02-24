@@ -10,6 +10,7 @@ use Commercial\Domain\ValueObjects\ServiceStatus;
 use Commercial\Domain\ValueObjects\ServiceCost;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class EloquentServiceRepository implements ServiceRepository
 {
@@ -107,7 +108,7 @@ class EloquentServiceRepository implements ServiceRepository
     private function toDomain(ServiceModel $model): Service
     {
         $currentCost = $model->costos()
-            ->where('vigencia', '>=', now())
+            ->where('vigencia', '>=', Carbon::now())
             ->orderBy('vigencia', 'asc')
             ->first();
 

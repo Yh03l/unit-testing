@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
 use Commercial\Domain\ValueObjects\ServiceStatus;
 use Commercial\Domain\ValueObjects\ServiceCost as ServiceCostVO;
+use Carbon\Carbon;
 
 class ServiceModel extends Model
 {
@@ -45,6 +46,38 @@ class ServiceModel extends Model
         'deleted_at' => 'datetime:Y-m-d H:i:s'
     ];
 
+    protected static function boot(): void
+    {
+        parent::boot();
+    }
+
+    public function save(array $options = []): bool
+    {
+        $this->validateState();
+        return parent::save($options);
+    }
+
+    protected function validateState(): void
+    {
+        $validStates = [
+            ServiceStatus::ACTIVO->toString(),
+            ServiceStatus::INACTIVO->toString(),
+            ServiceStatus::SUSPENDIDO->toString()
+        ];
+        
+        if (empty($this->estado)) {
+            throw new \InvalidArgumentException('El estado del servicio no puede estar vacío');
+        }
+
+        if (!is_string($this->estado)) {
+            throw new \InvalidArgumentException('El estado del servicio debe ser una cadena de texto');
+        }
+
+        if (!in_array($this->estado, $validStates, true)) {
+            throw new \InvalidArgumentException('Estado de servicio inválido');
+        }
+    }
+
     public function catalogo(): BelongsTo
     {
         return $this->belongsTo(CatalogModel::class, 'catalogo_id');
@@ -59,7 +92,7 @@ class ServiceModel extends Model
     {
         // Primero intentamos obtener el costo vigente actual
         $currentCost = $this->costos()
-            ->where('vigencia', '<=', now())
+            ->where('vigencia', '<=', Carbon::now())
             ->orderBy('vigencia', 'desc')
             ->first();
 
@@ -73,7 +106,7 @@ class ServiceModel extends Model
 
         // Si no hay costo vigente, buscamos el próximo costo programado
         $futureCost = $this->costos()
-            ->where('vigencia', '>', now())
+            ->where('vigencia', '>', Carbon::now())
             ->orderBy('vigencia', 'asc')
             ->first();
 

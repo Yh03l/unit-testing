@@ -14,6 +14,18 @@ class ServiceCostModel extends Model
 {
     use HasUuid;
 
+    private static bool $enableDateValidation = true;
+
+    public static function disableDateValidation(): void
+    {
+        self::$enableDateValidation = false;
+    }
+
+    public static function enableDateValidation(): void
+    {
+        self::$enableDateValidation = true;
+    }
+
     protected $table = 'costo_servicios';
     protected $keyType = 'string';
     public $incrementing = false;
@@ -52,7 +64,7 @@ class ServiceCostModel extends Model
                 throw new \InvalidArgumentException('El monto debe ser un número');
             }
             
-            if ($model->vigencia < Carbon::now()) {
+            if (self::$enableDateValidation && $model->vigencia < Carbon::now()) {
                 throw new \InvalidArgumentException('La fecha de vigencia no puede ser anterior a la fecha actual');
             }
         });
@@ -65,12 +77,12 @@ class ServiceCostModel extends Model
 
     public function scopeActive(Builder $query): Builder
     {
-        return $query->where('vigencia', '>=', now());
+        return $query->where('vigencia', '>=', Carbon::now());
     }
 
     public function scopeExpired(Builder $query): Builder
     {
-        return $query->where('vigencia', '<', now());
+        return $query->where('vigencia', '<', Carbon::now());
     }
 
     public function scopeByMoneda(Builder $query, string $moneda): Builder
@@ -85,12 +97,12 @@ class ServiceCostModel extends Model
 
     public function isActive(): bool
     {
-        return $this->vigencia >= now();
+        return $this->vigencia >= Carbon::now();
     }
 
     public function isExpired(): bool
     {
-        return $this->vigencia < now();
+        return $this->vigencia < Carbon::now();
     }
 
     public function getNextActiveCost(): ?self
