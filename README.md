@@ -90,3 +90,74 @@ Para una guía completa sobre la estrategia de testing, incluyendo:
 # Generar reporte de cobertura
 ./vendor/bin/phpunit --coverage-html coverage
 ```
+
+# Unit Testing Project
+
+Este es un proyecto de Laravel para practicar pruebas unitarias y de integración.
+
+## Requisitos Previos
+
+- PHP 8.2 o superior
+- Composer
+- Node.js (versión LTS recomendada)
+- Git
+
+## Instalación
+
+1. Clonar el repositorio:
+```bash
+git clone https://github.com/Yh03l/unit-testing.git
+cd unit-testing
+```
+
+2. Instalar dependencias de PHP:
+```bash
+composer install
+```
+
+3. Instalar dependencias de Node.js:
+```bash
+npm install
+```
+
+4. Configurar el entorno:
+```bash
+cp .env.example .env
+php artisan key:generate
+```
+
+5. Configurar la base de datos:
+- El proyecto está configurado para usar SQLite por defecto
+- Se creará automáticamente el archivo de base de datos al ejecutar:
+```bash
+php artisan migrate
+```
+
+## Ejecutar el Proyecto
+
+1. Iniciar el servidor de desarrollo:
+```bash
+php artisan serve
+```
+
+El proyecto estará disponible en `http://localhost:8000`
+
+## Ejecutar Pruebas
+
+Para ejecutar las pruebas unitarias:
+```bash
+php artisan test
+```
+
+Este comando iniciará:
+- Servidor Laravel
+- Cola de trabajos
+- Logs en tiempo real
+- Servidor de Vite
+
+## Estructura del Proyecto
+
+- `/app` - Código principal de la aplicación
+- `/tests` - Pruebas unitarias y de integración
+- `/src/Commercial` - Módulo de lógica comercial y código principal del microservicio
+- `/database` - Migraciones y seeders
