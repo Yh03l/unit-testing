@@ -44,7 +44,7 @@ class AddServiceHandler
             $command->getCatalogId()
         );
 
-        $catalog->agregarServicio($service);
+        $catalog->addService($service);
         
         $this->repository->save($catalog);
     }
