@@ -1,0 +1,58 @@
+services:
+  commercial-api:
+    container_name: commercial-api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/var/www/html
+      - commercial_vendor:/var/www/html/vendor
+    ports:
+      - 9092:80
+    networks:
+      - nurtricenter_network
+    depends_on:
+      commercial-db:
+        condition: service_healthy
+    environment:
+      DB_CONNECTION: pgsql
+      DB_HOST: commercial-db
+      DB_PORT: ${POSTGRES_PORT}
+      DB_DATABASE: ${POSTGRES_DB}
+      DB_USERNAME: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      APP_ENV: local
+      APP_DEBUG: "true"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/api/v1/catalogs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  commercial-db:
+    container_name: commercial-db
+    image: postgres:15
+    ports:
+      - ${POSTGRES_PORT}:5432
+    volumes:
+      - commercial_postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    networks:
+      - nurtricenter_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  commercial_vendor:
+  commercial_postgres_data:
+
+networks:
+  nurtricenter_network:

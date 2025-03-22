@@ -1,0 +1,59 @@
+# Include any files or directories that you don't want to be copied to your
+# container here (e.g., local build artifacts, temporary files, etc.).
+#
+# For more help, visit the .dockerignore file reference guide at
+# https://docs.docker.com/go/build-context-dockerignore/
+
+# Archivos de desarrollo
+.git
+.gitignore
+.vscode
+.idea
+*.log
+*.cache
+*.swp
+*.swo
+
+# Archivos de Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Archivos de Node
+node_modules
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Archivos de entorno
+.env
+.env.*
+!.env.example
+
+# Archivos de caché y compilación
+vendor
+bootstrap/cache/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/logs/*
+storage/framework/maintenance.php
+
+# Archivos de documentación
+README.md
+CHANGELOG.md
+LICENSE
+docs
+
+# Archivos de pruebas
+tests
+phpunit.xml
+.phpunit.result.cache
+coverage
+
+# Otros archivos innecesarios
+*.md
+*.txt
+*.json
+!composer.json
+composer.lock

@@ -161,3 +161,85 @@ Este comando iniciará:
 - `/tests` - Pruebas unitarias y de integración
 - `/src/Commercial` - Módulo de lógica comercial y código principal del microservicio
 - `/database` - Migraciones y seeders
+
+# Imagen Docker para Laravel con Apache
+
+Esta imagen Docker está optimizada para ejecutar aplicaciones Laravel con Apache y PHP 8.2.4.
+
+## Características
+
+- PHP 8.2.4 con Apache
+- Composer para gestión de dependencias
+- Extensiones PHP esenciales:
+  - mbstring
+  - exif
+  - pcntl
+  - bcmath
+  - gd
+  - zip
+  - pdo_pgsql
+- Configuración optimizada para Laravel
+- Soporte para mod_rewrite de Apache
+- Permisos configurados correctamente para Laravel
+
+## Uso
+
+### Pull de la imagen
+
+```bash
+docker pull yh03lhz/nurjhz:latest
+```
+
+### Ejemplo de docker-compose
+
+```yaml
+services:
+  app:
+    image: yh03lhz/nurjhz:latest
+    container_name: laravel-app
+    ports:
+      - "9092:80"
+    volumes:
+      - .:/var/www/html
+      - vendor:/var/www/html/vendor
+    networks:
+      - app-network
+
+volumes:
+  vendor:
+
+networks:
+  app-network:
+```
+
+### Variables de Entorno
+
+La imagen utiliza las variables de entorno estándar de Laravel. Asegúrate de tener un archivo `.env` configurado correctamente.
+
+## Requisitos del Sistema
+
+- Docker 20.10 o superior
+- Docker Compose 2.0 o superior
+- 2GB de RAM mínimo
+- 10GB de espacio en disco
+
+## Puertos
+
+- El contenedor expone el puerto 80 internamente
+- Por defecto, se mapea al puerto 9092 en el host
+
+## Volúmenes
+
+- `/var/www/html`: Directorio de la aplicación
+- `/var/www/html/vendor`: Dependencias de Composer
+
+## Red
+
+La imagen está configurada para trabajar en una red Docker. Asegúrate de crear y conectar la red apropiada.
+
+## Permisos
+
+Los permisos están configurados automáticamente para:
+- Directorio web: 755
+- Directorio storage: 755
+- Usuario: www-data
