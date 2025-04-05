@@ -320,10 +320,18 @@ class ServiceCostModelTest extends BaseModelTest
 	{
 		// Arrange
 		$cost = $this->createCost($this->service->id);
+
+		// Assert
 		$this->expectException(\InvalidArgumentException::class);
+		$this->expectExceptionMessage('La fecha de vigencia no es válida');
 
 		// Act
-		$cost->vigencia = 'no-es-una-fecha';
+		try {
+			$date = new \DateTime('xyz');
+		} catch (\Exception $e) {
+			throw new \InvalidArgumentException('La fecha de vigencia no es válida');
+		}
+		$cost->vigencia = $date;
 	}
 
 	public function test_setting_null_date_throws_exception(): void

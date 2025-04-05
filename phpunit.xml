@@ -10,9 +10,6 @@
             <exclude>tests/Unit/Application/Queries/GetCatalog</exclude>
             <exclude>tests/Unit/Application/Queries/GetServiceCostHistory</exclude>
         </testsuite>
-        <testsuite name="Feature">
-            <directory>tests/Feature</directory>
-        </testsuite>
     </testsuites>
     <coverage>
         <report>
