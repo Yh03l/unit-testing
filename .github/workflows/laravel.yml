@@ -14,8 +14,9 @@ jobs:
     - uses: shivammathur/setup-php@v2
       with:
         php-version: '8.2'
-        extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_sqlsrv, sqlsrv
-        coverage: none
+        extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_sqlsrv, sqlsrv, xdebug
+        coverage: xdebug
+        tools: composer:v2
 
     - uses: actions/checkout@v3
 
