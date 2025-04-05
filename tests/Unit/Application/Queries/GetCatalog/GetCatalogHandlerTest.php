@@ -15,11 +15,9 @@ use Mockery;
 use Mockery\Adapter\Phpunit\MockeryTestCase;
 use Mockery\MockInterface;
 
-/**
- * @runTestsInSeparateProcesses
- * @preserveGlobalState disabled
- * @group skip-ci
- */
+#[\PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses]
+#[\PHPUnit\Framework\Attributes\PreserveGlobalState(false)]
+#[\PHPUnit\Framework\Attributes\Group('skip-ci')]
 class GetCatalogHandlerTest extends MockeryTestCase
 {
 	private GetCatalogHandler $handler;

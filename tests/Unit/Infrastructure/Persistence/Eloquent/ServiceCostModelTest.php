@@ -316,27 +316,6 @@ class ServiceCostModelTest extends BaseModelTest
 		$cost->vigencia = Carbon::now()->subDay();
 	}
 
-	/**
-	 * @group skip-ci
-	 */
-	public function test_setting_invalid_date_format_throws_exception(): void
-	{
-		// Arrange
-		$cost = $this->createCost($this->service->id);
-
-		// Assert
-		$this->expectException(\InvalidArgumentException::class);
-		$this->expectExceptionMessage('La fecha de vigencia no es válida');
-
-		// Act
-		try {
-			$date = new \DateTime('xyz');
-		} catch (\Exception $e) {
-			throw new \InvalidArgumentException('La fecha de vigencia no es válida');
-		}
-		$cost->vigencia = $date;
-	}
-
 	public function test_setting_null_date_throws_exception(): void
 	{
 		// Arrange
