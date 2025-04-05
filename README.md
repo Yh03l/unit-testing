@@ -243,3 +243,141 @@ Los permisos están configurados automáticamente para:
 - Directorio web: 755
 - Directorio storage: 755
 - Usuario: www-data
+
+# Configuración de Linting y Pre-commit Hooks
+
+Este documento explica los pasos realizados para configurar el entorno de desarrollo con herramientas de linting y pre-commit hooks.
+
+## 1. Configuración de EditorConfig
+
+Se modificó el archivo `.editorconfig` para establecer las reglas básicas de formato:
+
+```ini
+[*]
+charset = utf-8
+end_of_line = lf
+indent_size = 4
+indent_style = tab
+insert_final_newline = true
+trim_trailing_whitespace = true
+```
+
+**¿Por qué?**
+- Para mantener consistencia en el formato del código entre diferentes editores
+- Para forzar el uso de tabs en lugar de espacios
+- Para establecer un estándar de indentación (4 caracteres)
+
+## 2. Instalación de Husky y lint-staged
+
+Se instalaron las siguientes dependencias:
+```bash
+npm install --save-dev husky lint-staged
+```
+
+**¿Por qué?**
+- **Husky**: Para ejecutar scripts antes de los commits
+- **lint-staged**: Para ejecutar linters solo en los archivos modificados
+
+## 3. Configuración de Husky
+
+Se inicializó Husky y se configuró el hook de pre-commit:
+```bash
+npx husky init
+```
+
+**¿Por qué?**
+- Para asegurar que el código cumpla con los estándares antes de cada commit
+- Para automatizar el proceso de verificación de código
+
+## 4. Configuración de lint-staged
+
+Se agregó la configuración en `package.json`:
+```json
+"lint-staged": {
+  "*.{js,jsx,ts,tsx,php}": [
+    "prettier --write",
+    "eslint --fix"
+  ]
+}
+```
+
+**¿Por qué?**
+- Para ejecutar los linters solo en los archivos que han sido modificados
+- Para optimizar el tiempo de ejecución de las verificaciones
+
+## 5. Instalación de ESLint y Prettier
+
+Se instalaron las herramientas de linting:
+```bash
+npm install --save-dev prettier eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin
+```
+
+**¿Por qué?**
+- **ESLint**: Para detectar errores y problemas de estilo en el código
+- **Prettier**: Para formatear el código automáticamente
+- **@typescript-eslint**: Para soporte de TypeScript
+
+## 6. Configuración de ESLint
+
+Se creó el archivo `.eslintrc.json`:
+```json
+{
+  "env": {
+    "browser": true,
+    "es2021": true,
+    "node": true
+  },
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended"
+  ],
+  "rules": {
+    "indent": ["error", "tab"],
+    "linebreak-style": ["error", "unix"],
+    "quotes": ["error", "single"],
+    "semi": ["error", "always"]
+  }
+}
+```
+
+**¿Por qué?**
+- Para definir reglas específicas de linting
+- Para configurar el soporte de TypeScript
+- Para establecer reglas de formato consistentes
+
+## 7. Configuración de Prettier
+
+Se creó el archivo `.prettierrc`:
+```json
+{
+  "useTabs": true,
+  "tabWidth": 4,
+  "singleQuote": true,
+  "trailingComma": "es5",
+  "semi": true,
+  "printWidth": 100
+}
+```
+
+**¿Por qué?**
+- Para configurar el formateo automático del código
+- Para mantener consistencia con las reglas de ESLint
+- Para establecer límites de longitud de línea y otros formatos
+
+## Flujo de Trabajo
+
+1. Cuando realizas un commit:
+   - Husky intercepta el commit
+   - Ejecuta el hook de pre-commit
+   - lint-staged identifica los archivos modificados
+   - Prettier formatea los archivos
+   - ESLint verifica el código
+   - Si todo pasa, se permite el commit
+   - Si hay errores, se detiene el commit
+
+2. Beneficios:
+   - Código consistente y bien formateado
+   - Detección temprana de errores
+   - Automatización del proceso de verificación
+   - Mejor calidad de código
+   - Menos conflictos en el control de versiones
