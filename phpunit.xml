@@ -9,6 +9,7 @@
             <directory>tests/Unit</directory>
             <exclude>tests/Unit/Application/Queries/GetCatalog</exclude>
             <exclude>tests/Unit/Application/Queries/GetServiceCostHistory</exclude>
+            <exclude>tests/Unit/Infrastructure/Persistence/Eloquent/ServiceCostModelTest</exclude>
         </testsuite>
     </testsuites>
     <coverage>

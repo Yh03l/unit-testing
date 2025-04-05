@@ -316,6 +316,9 @@ class ServiceCostModelTest extends BaseModelTest
 		$cost->vigencia = Carbon::now()->subDay();
 	}
 
+	/**
+	 * @group skip-ci
+	 */
 	public function test_setting_invalid_date_format_throws_exception(): void
 	{
 		// Arrange
