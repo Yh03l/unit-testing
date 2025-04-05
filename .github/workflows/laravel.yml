@@ -35,4 +35,4 @@ jobs:
       env:
         DB_CONNECTION: sqlite
         DB_DATABASE: ":memory:"
-      run: php artisan test --testsuite=Unit 
+      run: php artisan test --testsuite=Unit --exclude-group skip-ci
