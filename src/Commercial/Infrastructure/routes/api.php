@@ -23,7 +23,7 @@ Route::prefix('v1')->group(function () {
     });
 
     // Rutas para Catálogos
-    Route::prefix('catalogs')->group(function () {
+    Route::prefix('catalogos')->group(function () {
         Route::get('/', [CatalogController::class, 'index']);
         Route::get('/{id}', [CatalogController::class, 'show']);
         Route::post('/', [CatalogController::class, 'store']);
