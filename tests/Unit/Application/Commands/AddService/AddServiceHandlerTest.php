@@ -17,195 +17,198 @@ use Mockery\Adapter\Phpunit\MockeryTestCase;
 
 class AddServiceHandlerTest extends MockeryTestCase
 {
-    private AddServiceHandler $handler;
-    private CatalogRepository $repository;
-    private string $catalogId;
-    private string $nombre;
-    private string $descripcion;
-    private float $costo;
-    private string $moneda;
-    private DateTimeImmutable $vigencia;
-    private string $tipoServicioId;
-    private Catalog $catalog;
+	private AddServiceHandler $handler;
+	private CatalogRepository $repository;
+	private string $catalogId;
+	private string $nombre;
+	private string $descripcion;
+	private float $costo;
+	private string $moneda;
+	private DateTimeImmutable $vigencia;
+	private string $tipoServicioId;
+	private Catalog $catalog;
 
-    protected function setUp(): void
-    {
-        $this->repository = Mockery::mock(CatalogRepository::class);
-        $this->handler = new AddServiceHandler($this->repository);
-        
-        $this->catalogId = 'catalog-123';
-        $this->nombre = 'Test Service';
-        $this->descripcion = 'Test Description';
-        $this->costo = 100.00;
-        $this->moneda = 'BOB';
-        $this->vigencia = new DateTimeImmutable('2024-12-31');
-        $this->tipoServicioId = 'tipo-123';
-        
-        $this->catalog = Mockery::mock(Catalog::class);
-    }
+	protected function setUp(): void
+	{
+		$this->repository = Mockery::mock(CatalogRepository::class);
+		$this->handler = new AddServiceHandler($this->repository);
 
-    public function testHandleAddsServiceSuccessfully(): void
-    {
-        // Arrange
-        $command = new AddServiceCommand(
-            $this->catalogId,
-            $this->nombre,
-            $this->descripcion,
-            $this->costo,
-            $this->moneda,
-            $this->vigencia,
-            $this->tipoServicioId
-        );
+		$this->catalogId = 'catalog-123';
+		$this->nombre = 'Test Service';
+		$this->descripcion = 'Test Description';
+		$this->costo = 100.0;
+		$this->moneda = 'BOB';
+		$this->vigencia = new DateTimeImmutable('2024-12-31');
+		$this->tipoServicioId = 'tipo-123';
 
-        $this->repository->shouldReceive('findById')
-            ->with($this->catalogId)
-            ->once()
-            ->andReturn($this->catalog);
+		$this->catalog = Mockery::mock(Catalog::class);
+	}
 
-        $this->catalog->shouldReceive('agregarServicio')
-            ->once()
-            ->with(Mockery::type(Service::class));
+	public function testHandleAddsServiceSuccessfully(): void
+	{
+		// Arrange
+		$command = new AddServiceCommand(
+			$this->catalogId,
+			$this->nombre,
+			$this->descripcion,
+			$this->costo,
+			$this->moneda,
+			$this->vigencia,
+			$this->tipoServicioId
+		);
 
-        $this->repository->shouldReceive('save')
-            ->with($this->catalog)
-            ->once();
+		$this->repository
+			->shouldReceive('findById')
+			->with($this->catalogId)
+			->once()
+			->andReturn($this->catalog);
 
-        // Act
-        $this->handler->__invoke($command);
+		$this->catalog
+			->shouldReceive('addService')
+			->once()
+			->with(Mockery::type(Service::class));
 
-        // Assert
-        $this->assertTrue(true); // Si llegamos aquí, no se lanzaron excepciones
-    }
+		$this->repository->shouldReceive('save')->with($this->catalog)->once();
 
-    public function testHandleThrowsExceptionWhenCatalogNotFound(): void
-    {
-        // Arrange
-        $command = new AddServiceCommand(
-            $this->catalogId,
-            $this->nombre,
-            $this->descripcion,
-            $this->costo,
-            $this->moneda,
-            $this->vigencia,
-            $this->tipoServicioId
-        );
+		// Act
+		$this->handler->__invoke($command);
 
-        $this->repository->shouldReceive('findById')
-            ->with($this->catalogId)
-            ->once()
-            ->andReturn(null);
+		// Assert
+		$this->assertTrue(true); // Si llegamos aquí, no se lanzaron excepciones
+	}
 
-        // Assert
-        $this->expectException(CatalogException::class);
-        $this->expectExceptionMessage("Catálogo con ID {$this->catalogId} no encontrado");
+	public function testHandleThrowsExceptionWhenCatalogNotFound(): void
+	{
+		// Arrange
+		$command = new AddServiceCommand(
+			$this->catalogId,
+			$this->nombre,
+			$this->descripcion,
+			$this->costo,
+			$this->moneda,
+			$this->vigencia,
+			$this->tipoServicioId
+		);
 
-        // Act
-        $this->handler->__invoke($command);
-    }
+		$this->repository
+			->shouldReceive('findById')
+			->with($this->catalogId)
+			->once()
+			->andReturn(null);
 
-    public function testHandleCreatesServiceWithCorrectData(): void
-    {
-        // Arrange
-        $command = new AddServiceCommand(
-            $this->catalogId,
-            $this->nombre,
-            $this->descripcion,
-            $this->costo,
-            $this->moneda,
-            $this->vigencia,
-            $this->tipoServicioId
-        );
+		// Assert
+		$this->expectException(CatalogException::class);
+		$this->expectExceptionMessage("Catálogo con ID {$this->catalogId} no encontrado");
 
-        $this->repository->shouldReceive('findById')
-            ->with($this->catalogId)
-            ->once()
-            ->andReturn($this->catalog);
+		// Act
+		$this->handler->__invoke($command);
+	}
 
-        $this->catalog->shouldReceive('agregarServicio')
-            ->once()
-            ->with(Mockery::on(function (Service $service) {
-                return $service->getNombre() === $this->nombre
-                    && $service->getDescripcion() === $this->descripcion
-                    && $service->getCosto()->getMonto() === $this->costo
-                    && $service->getCosto()->getMoneda() === $this->moneda
-                    && $service->getCosto()->getVigencia() === $this->vigencia
-                    && $service->getTipoServicioId() === $this->tipoServicioId;
-            }));
+	public function testHandleCreatesServiceWithCorrectData(): void
+	{
+		// Arrange
+		$command = new AddServiceCommand(
+			$this->catalogId,
+			$this->nombre,
+			$this->descripcion,
+			$this->costo,
+			$this->moneda,
+			$this->vigencia,
+			$this->tipoServicioId
+		);
 
-        $this->repository->shouldReceive('save')
-            ->with($this->catalog)
-            ->once();
+		$this->repository
+			->shouldReceive('findById')
+			->with($this->catalogId)
+			->once()
+			->andReturn($this->catalog);
 
-        // Act
-        $this->handler->__invoke($command);
+		$this->catalog
+			->shouldReceive('addService')
+			->once()
+			->with(
+				Mockery::on(function (Service $service) {
+					return $service->getNombre() === $this->nombre &&
+						$service->getDescripcion() === $this->descripcion &&
+						$service->getCosto()->getMonto() === $this->costo &&
+						$service->getCosto()->getMoneda() === $this->moneda &&
+						$service->getCosto()->getVigencia() === $this->vigencia &&
+						$service->getTipoServicioId() === $this->tipoServicioId;
+				})
+			);
 
-        // Assert
-        $this->assertTrue(true); // Si llegamos aquí, no se lanzaron excepciones
-    }
+		$this->repository->shouldReceive('save')->with($this->catalog)->once();
 
-    public function testInvokeCallsHandle(): void
-    {
-        // Arrange
-        $command = new AddServiceCommand(
-            $this->catalogId,
-            $this->nombre,
-            $this->descripcion,
-            $this->costo,
-            $this->moneda,
-            $this->vigencia,
-            $this->tipoServicioId
-        );
+		// Act
+		$this->handler->__invoke($command);
 
-        $this->repository->shouldReceive('findById')
-            ->with($this->catalogId)
-            ->once()
-            ->andReturn($this->catalog);
+		// Assert
+		$this->assertTrue(true); // Si llegamos aquí, no se lanzaron excepciones
+	}
 
-        $this->catalog->shouldReceive('agregarServicio')
-            ->once()
-            ->with(Mockery::type(Service::class));
+	public function testInvokeCallsHandle(): void
+	{
+		// Arrange
+		$command = new AddServiceCommand(
+			$this->catalogId,
+			$this->nombre,
+			$this->descripcion,
+			$this->costo,
+			$this->moneda,
+			$this->vigencia,
+			$this->tipoServicioId
+		);
 
-        $this->repository->shouldReceive('save')
-            ->with($this->catalog)
-            ->once();
+		$this->repository
+			->shouldReceive('findById')
+			->with($this->catalogId)
+			->once()
+			->andReturn($this->catalog);
 
-        // Act
-        $this->handler->__invoke($command);
+		$this->catalog
+			->shouldReceive('addService')
+			->once()
+			->with(Mockery::type(Service::class));
 
-        // Assert
-        $this->assertTrue(true); // Si llegamos aquí, no se lanzaron excepciones
-    }
+		$this->repository->shouldReceive('save')->with($this->catalog)->once();
 
-    public function testHandleCallsInvoke(): void
-    {
-        // Arrange
-        $command = new AddServiceCommand(
-            $this->catalogId,
-            $this->nombre,
-            $this->descripcion,
-            $this->costo,
-            $this->moneda,
-            $this->vigencia,
-            $this->tipoServicioId
-        );
+		// Act
+		$this->handler->__invoke($command);
 
-        $this->repository->shouldReceive('findById')
-            ->with($this->catalogId)
-            ->once()
-            ->andReturn($this->catalog);
+		// Assert
+		$this->assertTrue(true); // Si llegamos aquí, no se lanzaron excepciones
+	}
 
-        $this->catalog->shouldReceive('agregarServicio')
-            ->once()
-            ->with(Mockery::type(Service::class));
+	public function testHandleCallsInvoke(): void
+	{
+		// Arrange
+		$command = new AddServiceCommand(
+			$this->catalogId,
+			$this->nombre,
+			$this->descripcion,
+			$this->costo,
+			$this->moneda,
+			$this->vigencia,
+			$this->tipoServicioId
+		);
 
-        $this->repository->shouldReceive('save')
-            ->with($this->catalog)
-            ->once();
+		$this->repository
+			->shouldReceive('findById')
+			->with($this->catalogId)
+			->once()
+			->andReturn($this->catalog);
 
-        // Act
-        $this->handler->handle($command);
+		$this->catalog
+			->shouldReceive('addService')
+			->once()
+			->with(Mockery::type(Service::class));
 
-        // Assert
-        $this->assertTrue(true); // Si llegamos aquí, no se lanzaron excepciones
-    }
+		$this->repository->shouldReceive('save')->with($this->catalog)->once();
+
+		// Act
+		$this->handler->handle($command);
+
+		// Assert
+		$this->assertTrue(true); // Si llegamos aquí, no se lanzaron excepciones
+	}
 }

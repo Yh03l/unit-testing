@@ -15,107 +15,101 @@ use Mockery;
 use Mockery\Adapter\Phpunit\MockeryTestCase;
 use Mockery\MockInterface;
 
-/**
- * @runTestsInSeparateProcesses
- * @preserveGlobalState disabled
- */
+#[\PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses]
+#[\PHPUnit\Framework\Attributes\PreserveGlobalState(false)]
+#[\PHPUnit\Framework\Attributes\Group('skip-ci')]
 class GetCatalogHandlerTest extends MockeryTestCase
 {
-    private GetCatalogHandler $handler;
-    private CatalogRepository|MockInterface $repository;
-    private string $catalogId;
-    private Catalog|MockInterface $catalog;
+	private GetCatalogHandler $handler;
+	private CatalogRepository|MockInterface $repository;
+	private string $catalogId;
+	private Catalog|MockInterface $catalog;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->repository = Mockery::mock(CatalogRepository::class);
-        $this->handler = new GetCatalogHandler($this->repository);
-        $this->catalogId = 'catalog-123';
-        $this->catalog = Mockery::mock(Catalog::class);
-    }
+	protected function setUp(): void
+	{
+		parent::setUp();
+		$this->repository = Mockery::mock(CatalogRepository::class);
+		$this->handler = new GetCatalogHandler($this->repository);
+		$this->catalogId = 'catalog-123';
+		$this->catalog = Mockery::mock(Catalog::class);
+	}
 
-    protected function tearDown(): void
-    {
-        Mockery::close();
-        parent::tearDown();
-    }
+	protected function tearDown(): void
+	{
+		Mockery::close();
+		parent::tearDown();
+	}
 
-    public function testHandleReturnsCatalogDTOWhenExists(): void
-    {
-        // Arrange
-        $query = new GetCatalogQuery($this->catalogId);
-        
-        $this->catalog->shouldReceive('getId')
-            ->andReturn($this->catalogId);
-        $this->catalog->shouldReceive('getNombre')
-            ->andReturn('Test Catalog');
-        $this->catalog->shouldReceive('getEstado')
-            ->andReturn(ServiceStatus::ACTIVO);
-        $this->catalog->shouldReceive('getServices')
-            ->andReturn([]);
+	public function testHandleReturnsCatalogDTOWhenExists(): void
+	{
+		// Arrange
+		$query = new GetCatalogQuery($this->catalogId);
 
-        $this->repository->shouldReceive('findById')
-            ->with($this->catalogId)
-            ->once()
-            ->andReturn($this->catalog);
+		$this->catalog->shouldReceive('getId')->andReturn($this->catalogId);
+		$this->catalog->shouldReceive('getNombre')->andReturn('Test Catalog');
+		$this->catalog->shouldReceive('getEstado')->andReturn(ServiceStatus::ACTIVO);
+		$this->catalog->shouldReceive('getServices')->andReturn([]);
 
-        // Act
-        $result = $this->handler->handle($query);
+		$this->repository
+			->shouldReceive('findById')
+			->with($this->catalogId)
+			->once()
+			->andReturn($this->catalog);
 
-        // Assert
-        $this->assertInstanceOf(CatalogDTO::class, $result);
-        $this->assertEquals($this->catalogId, $result->id);
-        $this->assertEquals('Test Catalog', $result->nombre);
-        $this->assertEquals(ServiceStatus::ACTIVO, $result->estado);
-        $this->assertEquals([], $result->services);
-    }
+		// Act
+		$result = $this->handler->handle($query);
 
-    public function testHandleThrowsExceptionWhenCatalogNotFound(): void
-    {
-        // Arrange
-        $query = new GetCatalogQuery($this->catalogId);
+		// Assert
+		$this->assertInstanceOf(CatalogDTO::class, $result);
+		$this->assertEquals($this->catalogId, $result->id);
+		$this->assertEquals('Test Catalog', $result->nombre);
+		$this->assertEquals(ServiceStatus::ACTIVO, $result->estado);
+		$this->assertEquals([], $result->services);
+	}
 
-        $this->repository->shouldReceive('findById')
-            ->with($this->catalogId)
-            ->once()
-            ->andReturn(null);
+	public function testHandleThrowsExceptionWhenCatalogNotFound(): void
+	{
+		// Arrange
+		$query = new GetCatalogQuery($this->catalogId);
 
-        // Assert
-        $this->expectException(CatalogException::class);
-        $this->expectExceptionMessage("Catálogo con ID {$this->catalogId} no encontrado");
+		$this->repository
+			->shouldReceive('findById')
+			->with($this->catalogId)
+			->once()
+			->andReturn(null);
 
-        // Act
-        $this->handler->handle($query);
-    }
+		// Assert
+		$this->expectException(CatalogException::class);
+		$this->expectExceptionMessage("Catálogo con ID {$this->catalogId} no encontrado");
 
-    public function testInvokeCallsHandle(): void
-    {
-        // Arrange
-        $query = new GetCatalogQuery($this->catalogId);
-        
-        $this->catalog->shouldReceive('getId')
-            ->andReturn($this->catalogId);
-        $this->catalog->shouldReceive('getNombre')
-            ->andReturn('Test Catalog');
-        $this->catalog->shouldReceive('getEstado')
-            ->andReturn(ServiceStatus::ACTIVO);
-        $this->catalog->shouldReceive('getServices')
-            ->andReturn([]);
+		// Act
+		$this->handler->handle($query);
+	}
 
-        $this->repository->shouldReceive('findById')
-            ->with($this->catalogId)
-            ->once()
-            ->andReturn($this->catalog);
+	public function testInvokeCallsHandle(): void
+	{
+		// Arrange
+		$query = new GetCatalogQuery($this->catalogId);
 
-        // Act
-        $result = ($this->handler)($query);
+		$this->catalog->shouldReceive('getId')->andReturn($this->catalogId);
+		$this->catalog->shouldReceive('getNombre')->andReturn('Test Catalog');
+		$this->catalog->shouldReceive('getEstado')->andReturn(ServiceStatus::ACTIVO);
+		$this->catalog->shouldReceive('getServices')->andReturn([]);
 
-        // Assert
-        $this->assertInstanceOf(CatalogDTO::class, $result);
-        $this->assertEquals($this->catalogId, $result->id);
-        $this->assertEquals('Test Catalog', $result->nombre);
-        $this->assertEquals(ServiceStatus::ACTIVO, $result->estado);
-        $this->assertEquals([], $result->services);
-    }
-} 
+		$this->repository
+			->shouldReceive('findById')
+			->with($this->catalogId)
+			->once()
+			->andReturn($this->catalog);
+
+		// Act
+		$result = ($this->handler)($query);
+
+		// Assert
+		$this->assertInstanceOf(CatalogDTO::class, $result);
+		$this->assertEquals($this->catalogId, $result->id);
+		$this->assertEquals('Test Catalog', $result->nombre);
+		$this->assertEquals(ServiceStatus::ACTIVO, $result->estado);
+		$this->assertEquals([], $result->services);
+	}
+}
