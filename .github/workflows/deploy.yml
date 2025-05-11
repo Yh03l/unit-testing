@@ -37,6 +37,9 @@ jobs:
         DB_CONNECTION: sqlite
         DB_DATABASE: ":memory:"
       run: php artisan test --testsuite=Unit --exclude-group skip-ci
+    
+    - name: Run tests (Unit and Feature tests) via PHPUnit
+      run: vendor/bin/phpunit --coverage-clover=coverage.xml
         
     - name: Configure SSH
       run: |
