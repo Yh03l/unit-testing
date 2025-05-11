@@ -1,8 +1,7 @@
 <?php
 
 return [
-
-    /*
+	/*
     |--------------------------------------------------------------------------
     | Application Name
     |--------------------------------------------------------------------------
@@ -13,9 +12,9 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+	'name' => env('APP_NAME', 'Laravel'),
 
-    /*
+	/*
     |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
@@ -26,9 +25,9 @@ return [
     |
     */
 
-    'env' => env('APP_ENV', 'production'),
+	'env' => env('APP_ENV', 'production'),
 
-    /*
+	/*
     |--------------------------------------------------------------------------
     | Application Debug Mode
     |--------------------------------------------------------------------------
@@ -39,9 +38,9 @@ return [
     |
     */
 
-    'debug' => (bool) env('APP_DEBUG', false),
+	'debug' => (bool) env('APP_DEBUG', false),
 
-    /*
+	/*
     |--------------------------------------------------------------------------
     | Application URL
     |--------------------------------------------------------------------------
@@ -52,9 +51,9 @@ return [
     |
     */
 
-    'url' => env('APP_URL', 'http://localhost'),
+	'url' => env('APP_URL', 'http://localhost'),
 
-    /*
+	/*
     |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
@@ -65,9 +64,9 @@ return [
     |
     */
 
-    'timezone' => env('APP_TIMEZONE', 'UTC'),
+	'timezone' => env('APP_TIMEZONE', 'UTC'),
 
-    /*
+	/*
     |--------------------------------------------------------------------------
     | Application Locale Configuration
     |--------------------------------------------------------------------------
@@ -78,13 +77,13 @@ return [
     |
     */
 
-    'locale' => env('APP_LOCALE', 'en'),
+	'locale' => env('APP_LOCALE', 'en'),
 
-    'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
+	'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
 
-    'faker_locale' => env('APP_FAKER_LOCALE', 'en_US'),
+	'faker_locale' => env('APP_FAKER_LOCALE', 'en_US'),
 
-    /*
+	/*
     |--------------------------------------------------------------------------
     | Encryption Key
     |--------------------------------------------------------------------------
@@ -95,17 +94,13 @@ return [
     |
     */
 
-    'cipher' => 'AES-256-CBC',
+	'cipher' => 'AES-256-CBC',
 
-    'key' => env('APP_KEY'),
+	'key' => env('APP_KEY'),
 
-    'previous_keys' => [
-        ...array_filter(
-            explode(',', env('APP_PREVIOUS_KEYS', ''))
-        ),
-    ],
+	'previous_keys' => [...array_filter(explode(',', env('APP_PREVIOUS_KEYS', '')))],
 
-    /*
+	/*
     |--------------------------------------------------------------------------
     | Maintenance Mode Driver
     |--------------------------------------------------------------------------
@@ -118,55 +113,56 @@ return [
     |
     */
 
-    'maintenance' => [
-        'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),
-        'store' => env('APP_MAINTENANCE_STORE', 'database'),
-    ],
+	'maintenance' => [
+		'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),
+		'store' => env('APP_MAINTENANCE_STORE', 'database'),
+	],
 
-    'providers' => [
-        /*
-         * Laravel Framework Service Providers...
-         */
-        Illuminate\Foundation\Providers\ArtisanServiceProvider::class,
-        Illuminate\Auth\AuthServiceProvider::class,
-        Illuminate\Broadcasting\BroadcastServiceProvider::class,
-        Illuminate\Bus\BusServiceProvider::class,
-        Illuminate\Cache\CacheServiceProvider::class,
-        Illuminate\Foundation\Providers\ConsoleSupportServiceProvider::class,
-        Illuminate\Cookie\CookieServiceProvider::class,
-        Illuminate\Database\DatabaseServiceProvider::class,
-        Illuminate\Encryption\EncryptionServiceProvider::class,
-        Illuminate\Filesystem\FilesystemServiceProvider::class,
-        Illuminate\Foundation\Providers\FoundationServiceProvider::class,
-        Illuminate\Hashing\HashServiceProvider::class,
-        Illuminate\Translation\TranslationServiceProvider::class,
-        Illuminate\Validation\ValidationServiceProvider::class,
-        Illuminate\View\ViewServiceProvider::class,
+	'providers' => [
+		/*
+		 * Laravel Framework Service Providers...
+		 */
+		Illuminate\Foundation\Providers\ArtisanServiceProvider::class,
+		Illuminate\Auth\AuthServiceProvider::class,
+		Illuminate\Broadcasting\BroadcastServiceProvider::class,
+		Illuminate\Bus\BusServiceProvider::class,
+		Illuminate\Cache\CacheServiceProvider::class,
+		Illuminate\Foundation\Providers\ConsoleSupportServiceProvider::class,
+		Illuminate\Cookie\CookieServiceProvider::class,
+		Illuminate\Database\DatabaseServiceProvider::class,
+		Illuminate\Encryption\EncryptionServiceProvider::class,
+		Illuminate\Filesystem\FilesystemServiceProvider::class,
+		Illuminate\Foundation\Providers\FoundationServiceProvider::class,
+		Illuminate\Hashing\HashServiceProvider::class,
+		Illuminate\Translation\TranslationServiceProvider::class,
+		Illuminate\Validation\ValidationServiceProvider::class,
+		Illuminate\View\ViewServiceProvider::class,
+		Illuminate\Queue\QueueServiceProvider::class,
+		Illuminate\Session\SessionServiceProvider::class,
 
-        /*
-         * Package Service Providers...
-         */
-        Commercial\Infrastructure\Providers\CommercialServiceProvider::class,
+		/*
+		 * Package Service Providers...
+		 */
+		Commercial\Infrastructure\Providers\CommercialServiceProvider::class,
 
-        /*
-         * Application Service Providers...
-         */
-        App\Providers\AppServiceProvider::class,
-    ],
+		/*
+		 * Application Service Providers...
+		 */
+		App\Providers\AppServiceProvider::class,
+	],
 
-    'aliases' => [
-        'App' => Illuminate\Support\Facades\App::class,
-        'Arr' => Illuminate\Support\Arr::class,
-        'Artisan' => Illuminate\Support\Facades\Artisan::class,
-        'Config' => Illuminate\Support\Facades\Config::class,
-        'DB' => Illuminate\Support\Facades\DB::class,
-        'File' => Illuminate\Support\Facades\File::class,
-        'Lang' => Illuminate\Support\Facades\Lang::class,
-        'Log' => Illuminate\Support\Facades\Log::class,
-        'Route' => Illuminate\Support\Facades\Route::class,
-        'Storage' => Illuminate\Support\Facades\Storage::class,
-        'URL' => Illuminate\Support\Facades\URL::class,
-        'Validator' => Illuminate\Support\Facades\Validator::class,
-    ],
-
+	'aliases' => [
+		'App' => Illuminate\Support\Facades\App::class,
+		'Arr' => Illuminate\Support\Arr::class,
+		'Artisan' => Illuminate\Support\Facades\Artisan::class,
+		'Config' => Illuminate\Support\Facades\Config::class,
+		'DB' => Illuminate\Support\Facades\DB::class,
+		'File' => Illuminate\Support\Facades\File::class,
+		'Lang' => Illuminate\Support\Facades\Lang::class,
+		'Log' => Illuminate\Support\Facades\Log::class,
+		'Route' => Illuminate\Support\Facades\Route::class,
+		'Storage' => Illuminate\Support\Facades\Storage::class,
+		'URL' => Illuminate\Support\Facades\URL::class,
+		'Validator' => Illuminate\Support\Facades\Validator::class,
+	],
 ];

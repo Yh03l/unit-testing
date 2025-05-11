@@ -25,7 +25,7 @@ services:
       APP_DEBUG: "true"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80/api/v1/catalogs"]
-      interval: 30s
+      interval: 3600s
       timeout: 10s
       retries: 3
       start_period: 40s
