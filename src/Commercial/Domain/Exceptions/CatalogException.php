@@ -17,7 +17,7 @@ class CatalogException extends \DomainException
 		$message = "Catálogo con ID {$id} no encontrado";
 		$exception = new self($message);
 		#captureException($exception);
-		captureMessage($message, Severity::error());
+		#captureMessage($message, Severity::error());
 		return $exception;
 	}
 
