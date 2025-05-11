@@ -22,7 +22,7 @@
     </coverage>
     <source>
         <include>
-            <directory>app</directory>
+            <directory>tests/Unit</directory>
         </include>
     </source>
     <php>
