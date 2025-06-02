@@ -6,7 +6,7 @@ use Commercial\Api\Controllers\UserController;
 use Commercial\Api\Controllers\CatalogController;
 use Commercial\Api\Controllers\ServiceController;
 
-Route::prefix('v1')->group(function () {
+Route::prefix('commercial')->group(function () {
 	// Rutas de Contratos
 	Route::prefix('contracts')->group(function () {
 		Route::post('/', [ContractController::class, 'create']);

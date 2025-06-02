@@ -5,6 +5,6 @@ Característica: Gestión del Catálogo Comercial
   Para ver la oferta comercial disponible
 
   Escenario: Obtener lista de catálogo
-    Cuando hago una petición GET a "/api/v1/catalogs"
+    Cuando hago una petición GET a "/api/commercial/catalogs"
     Entonces debo recibir una respuesta con código 200
     Y la respuesta debe contener una lista de elementos del catálogo 

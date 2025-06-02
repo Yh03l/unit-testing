@@ -20,7 +20,7 @@
 									"pm.test(\"Status code is 201\", function () {\r",
 									"    pm.response.to.have.status(201);\r",
 									"});\r",
-									"pm.sendRequest('http://localhost:8000/api/v1/catalogs', function (err, res) {\r",
+									"pm.sendRequest('http://localhost:8000/api/commercial/catalogs', function (err, res) {\r",
 									"    if (res.code === 200) {\r",
 									"        const nombreCatalogo = pm.collectionVariables.get('nombreNuevoCatalogo');\r",
 									"        const jsonData = res.json();\r",
@@ -1284,7 +1284,7 @@
 	"variable": [
 		{
 			"key": "base_url",
-			"value": "http://localhost:8000/api/v1",
+			"value": "http://localhost:8000/api/commercial",
 			"type": "string"
 		},
 		{

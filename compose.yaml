@@ -24,7 +24,7 @@ services:
       APP_ENV: local
       APP_DEBUG: "true"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/api/v1/catalogs"]
+      test: ["CMD", "curl", "-f", "http://localhost:80/api/commercial/catalogs"]
       interval: 3600s
       timeout: 10s
       retries: 3
@@ -45,7 +45,7 @@ services:
       - nurtricenter_network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
-      interval: 10s
+      interval: 3600s
       timeout: 5s
       retries: 5
       start_period: 10s

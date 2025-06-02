@@ -184,7 +184,7 @@ class ServiceConsumerTest extends TestCase
         $request = new ConsumerRequest();
         $request
             ->setMethod('GET')
-            ->setPath('/api/v1/services')
+            ->setPath('/api/commercial/services')
             ->addHeader('Accept', 'application/json');
 
         // Definir la respuesta esperada
@@ -208,7 +208,7 @@ class ServiceConsumerTest extends TestCase
             
         // Realizar la prueba
         $client = new Client(['base_uri' => $this->config->getBaseUri()]);
-        $actualResponse = $client->get('/api/v1/services', [
+        $actualResponse = $client->get('/api/commercial/services', [
             'headers' => ['Accept' => 'application/json']
         ]);
         

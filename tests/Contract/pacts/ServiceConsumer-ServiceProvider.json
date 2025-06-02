@@ -10,7 +10,7 @@
           "Accept": "application/json"
         },
         "method": "GET",
-        "path": "/api/v1/services"
+        "path": "/api/commercial/services"
       },
       "response": {
         "body": {
@@ -157,7 +157,7 @@
           "Content-Type": "application/json"
         },
         "method": "POST",
-        "path": "/api/v1/services"
+        "path": "/api/commercial/services"
       },
       "response": {
         "body": {
