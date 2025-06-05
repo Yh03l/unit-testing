@@ -18,80 +18,128 @@ use Illuminate\Routing\Controller;
 
 class ContractController extends Controller
 {
-    private CommandBus $commandBus;
-    private QueryBus $queryBus;
+	private CommandBus $commandBus;
+	private QueryBus $queryBus;
 
-    public function __construct(CommandBus $commandBus, QueryBus $queryBus)
-    {
-        $this->commandBus = $commandBus;
-        $this->queryBus = $queryBus;
-    }
+	public function __construct(CommandBus $commandBus, QueryBus $queryBus)
+	{
+		$this->commandBus = $commandBus;
+		$this->queryBus = $queryBus;
+	}
 
-    public function create(CreateContractRequest $request): JsonResponse
-    {
-        $command = new CreateContractCommand(
-            $request->getPacienteId(),
-            $request->getServicioId(),
-            $request->getFechaInicio(),
-            $request->getFechaFin()
-        );
+	public function create(CreateContractRequest $request): JsonResponse
+	{
+		$command = new CreateContractCommand(
+			$request->validated('paciente_id'),
+			$request->validated('servicio_id'),
+			$request->validated('fecha_inicio')
+				? new \DateTimeImmutable($request->validated('fecha_inicio'))
+				: null,
+			$request->validated('fecha_fin')
+				? new \DateTimeImmutable($request->validated('fecha_fin'))
+				: null
+		);
 
-        try {
-            $this->commandBus->dispatch($command);
-            return new JsonResponse(['message' => 'Contrato creado exitosamente'], Response::HTTP_CREATED);
-        } catch (\DomainException $e) {
-            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
-        }
-    }
+		try {
+			$result = $this->commandBus->dispatch($command);
 
-    public function get(string $id): JsonResponse
-    {
-        $query = new GetContractQuery($id);
+			if (!$result->isSuccess()) {
+				return new JsonResponse(
+					['error' => $result->getMessage()],
+					Response::HTTP_BAD_REQUEST
+				);
+			}
 
-        try {
-            $contract = $this->queryBus->ask($query);
-            if ($contract === null) {
-                return new JsonResponse(['error' => 'Contrato no encontrado'], Response::HTTP_NOT_FOUND);
-            }
-            return new JsonResponse($contract, Response::HTTP_OK);
-        } catch (\Exception $e) {
-            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
-    }
+			// Obtener los datos completos del contrato creado
+			$contract = $this->queryBus->dispatch(new GetContractQuery($result->getId()));
 
-    public function activate(string $id): JsonResponse
-    {
-        $command = new ActivateContractCommand($id);
+			return new JsonResponse(
+				[
+					'message' => $result->getMessage(),
+					'data' => $contract,
+				],
+				Response::HTTP_CREATED
+			);
+		} catch (\DomainException $e) {
+			return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
+		}
+	}
 
-        try {
-            $this->commandBus->dispatch($command);
-            return new JsonResponse(['message' => 'Contrato activado exitosamente'], Response::HTTP_OK);
-        } catch (\DomainException $e) {
-            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
-        }
-    }
+	public function get(string $id): JsonResponse
+	{
+		$query = new GetContractQuery($id);
 
-    public function cancel(string $id): JsonResponse
-    {
-        $command = new CancelContractCommand($id);
+		try {
+			$contract = $this->queryBus->dispatch($query);
+			if ($contract === null) {
+				return new JsonResponse(
+					['error' => 'Contrato no encontrado'],
+					Response::HTTP_NOT_FOUND
+				);
+			}
+			return new JsonResponse($contract, Response::HTTP_OK);
+		} catch (\Exception $e) {
+			return new JsonResponse(
+				['error' => $e->getMessage()],
+				Response::HTTP_INTERNAL_SERVER_ERROR
+			);
+		}
+	}
 
-        try {
-            $this->commandBus->dispatch($command);
-            return new JsonResponse(['message' => 'Contrato cancelado exitosamente'], Response::HTTP_OK);
-        } catch (\DomainException $e) {
-            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
-        }
-    }
+	public function activate(string $id): JsonResponse
+	{
+		$command = new ActivateContractCommand($id);
 
-    public function getByPaciente(string $pacienteId): JsonResponse
-    {
-        $query = new ListContractsByPacienteQuery($pacienteId);
+		try {
+			$result = $this->commandBus->dispatch($command);
+			if (!$result->isSuccess()) {
+				return new JsonResponse(
+					['error' => $result->getMessage()],
+					Response::HTTP_BAD_REQUEST
+				);
+			}
+			return new JsonResponse(
+				['message' => 'Contrato activado exitosamente'],
+				Response::HTTP_OK
+			);
+		} catch (\DomainException $e) {
+			return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
+		}
+	}
 
-        try {
-            $contracts = $this->queryBus->ask($query);
-            return new JsonResponse($contracts, Response::HTTP_OK);
-        } catch (\Exception $e) {
-            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
-    }
-} 
+	public function cancel(string $id): JsonResponse
+	{
+		$command = new CancelContractCommand($id);
+
+		try {
+			$result = $this->commandBus->dispatch($command);
+			if (!$result->isSuccess()) {
+				return new JsonResponse(
+					['error' => $result->getMessage()],
+					Response::HTTP_BAD_REQUEST
+				);
+			}
+			return new JsonResponse(
+				['message' => 'Contrato cancelado exitosamente'],
+				Response::HTTP_OK
+			);
+		} catch (\DomainException $e) {
+			return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
+		}
+	}
+
+	public function getByPaciente(string $pacienteId): JsonResponse
+	{
+		$query = new ListContractsByPacienteQuery($pacienteId);
+
+		try {
+			$contracts = $this->queryBus->dispatch($query);
+			return new JsonResponse($contracts, Response::HTTP_OK);
+		} catch (\Exception $e) {
+			return new JsonResponse(
+				['error' => $e->getMessage()],
+				Response::HTTP_INTERNAL_SERVER_ERROR
+			);
+		}
+	}
+}

@@ -6,5 +6,6 @@ namespace Commercial\Infrastructure\EventBus;
 
 interface EventBus
 {
-    public function publish(object $event): void;
-} 
+	public function publish(object $event): void;
+	public function publishPendingEvents(): void;
+}

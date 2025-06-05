@@ -4,51 +4,51 @@ declare(strict_types=1);
 
 namespace Commercial\Api\Requests;
 
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 
-class CreateContractRequest extends Request
+class CreateContractRequest extends FormRequest
 {
-    private string $pacienteId;
-    private string $servicioId;
-    private \DateTimeImmutable $fechaInicio;
-    private ?\DateTimeImmutable $fechaFin;
+	public function authorize(): bool
+	{
+		return true;
+	}
 
-    public function rules(): array
-    {
-        return [
-            'paciente_id' => 'required|uuid',
-            'servicio_id' => 'required|uuid',
-            'fecha_inicio' => 'required|date',
-            'fecha_fin' => 'nullable|date|after:fecha_inicio'
-        ];
-    }
+	public function rules(): array
+	{
+		return [
+			'paciente_id' => 'required|uuid|exists:pacientes,id',
+			'servicio_id' => 'required|uuid|exists:servicios,id',
+			'fecha_inicio' => 'required|date',
+			'fecha_fin' => 'nullable|date|after:fecha_inicio',
+		];
+	}
 
-    public function getPacienteId(): string
-    {
-        return $this->pacienteId;
-    }
+	protected function prepareForValidation(): void
+	{
+		// Convertir las fechas a formato ISO 8601 para asegurar una validación consistente
+		$request = Request::capture();
+		$data = $request->all();
 
-    public function getServicioId(): string
-    {
-        return $this->servicioId;
-    }
+		if (isset($data['fecha_inicio'])) {
+			$data['fecha_inicio'] = (new \DateTimeImmutable($data['fecha_inicio']))->format(
+				'Y-m-d\TH:i:s.u\Z'
+			);
+		}
 
-    public function getFechaInicio(): \DateTimeImmutable
-    {
-        return $this->fechaInicio;
-    }
+		if (isset($data['fecha_fin'])) {
+			$data['fecha_fin'] = (new \DateTimeImmutable($data['fecha_fin']))->format(
+				'Y-m-d\TH:i:s.u\Z'
+			);
+		}
 
-    public function getFechaFin(): ?\DateTimeImmutable
-    {
-        return $this->fechaFin;
-    }
+		$request->replace($data);
+	}
 
-    protected function prepareForValidation(): void
-    {
-        $this->pacienteId = $this->input('paciente_id');
-        $this->servicioId = $this->input('servicio_id');
-        $this->fechaInicio = new \DateTimeImmutable($this->input('fecha_inicio'));
-        $fechaFin = $this->input('fecha_fin');
-        $this->fechaFin = $fechaFin ? new \DateTimeImmutable($fechaFin) : null;
-    }
-} 
+	protected function failedValidation(Validator $validator)
+	{
+		throw new HttpResponseException(response()->json($validator->errors(), 422));
+	}
+}

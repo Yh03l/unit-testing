@@ -14,6 +14,8 @@ services:
     depends_on:
       commercial-db:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     environment:
       DB_CONNECTION: pgsql
       DB_HOST: commercial-db
@@ -21,6 +23,11 @@ services:
       DB_DATABASE: ${POSTGRES_DB}
       DB_USERNAME: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: commercial
+      RABBITMQ_PASSWORD: commercial123
+      RABBITMQ_VHOST: /
       APP_ENV: local
       APP_DEBUG: "true"
     healthcheck:
@@ -50,9 +57,32 @@ services:
       retries: 5
       start_period: 10s
 
+  rabbitmq:
+    image: rabbitmq:3.13.7-management
+    container_name: commercial-rabbitmq
+    ports:
+      - "5672:5672"  # Puerto AMQP
+      - "15672:15672" # UI de gestión
+    volumes:
+      - ./rabbitmq/definitions.json:/etc/rabbitmq/definitions.json
+      - commercial_rabbitmq_data:/var/lib/rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: commercial
+      RABBITMQ_DEFAULT_PASS: commercial123
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: "-rabbitmq_management load_definitions \"/etc/rabbitmq/definitions.json\""
+    networks:
+      - nurtricenter_network
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
 volumes:
   commercial_vendor:
   commercial_postgres_data:
+  commercial_rabbitmq_data:
 
 networks:
   nurtricenter_network:

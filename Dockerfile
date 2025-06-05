@@ -18,10 +18,11 @@ RUN apt-get update -y && apt-get install -y \
     unzip zip \
     libpq-dev \
     libffi-dev \
+    cron \  
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
-RUN docker-php-ext-install mbstring exif pcntl bcmath gd zip pdo_pgsql
+RUN docker-php-ext-install mbstring exif pcntl bcmath gd zip pdo_pgsql sockets
 
 # Install FFI extension
 RUN docker-php-ext-install ffi
@@ -55,8 +56,6 @@ RUN a2ensite 000-default.conf
 
 # Copy the custom post-deployment script
 COPY post_deploy.sh /usr/local/bin/post_deploy.sh
-
-# Ensure it's executable
 RUN chmod +x /usr/local/bin/post_deploy.sh
 
 # Expose port 80 and start Apache server

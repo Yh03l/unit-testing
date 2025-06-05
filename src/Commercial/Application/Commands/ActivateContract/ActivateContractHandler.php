@@ -9,29 +9,34 @@ use Commercial\Infrastructure\EventBus\EventBus;
 
 class ActivateContractHandler
 {
-    private ContractRepository $repository;
-    private EventBus $eventBus;
+	private ContractRepository $repository;
+	private EventBus $eventBus;
 
-    public function __construct(ContractRepository $repository, EventBus $eventBus)
-    {
-        $this->repository = $repository;
-        $this->eventBus = $eventBus;
-    }
+	public function __construct(ContractRepository $repository, EventBus $eventBus)
+	{
+		$this->repository = $repository;
+		$this->eventBus = $eventBus;
+	}
 
-    public function handle(ActivateContractCommand $command): void
-    {
-        $contract = $this->repository->findById($command->getContractId());
-        if ($contract === null) {
-            throw new \DomainException('Contrato no encontrado');
-        }
+	public function __invoke(ActivateContractCommand $command): void
+	{
+		$this->handle($command);
+	}
 
-        $contract->activarContrato();
-        $this->repository->save($contract);
+	public function handle(ActivateContractCommand $command): void
+	{
+		$contract = $this->repository->findById($command->getContractId());
+		if ($contract === null) {
+			throw new \DomainException('Contrato no encontrado');
+		}
 
-        // Publicar eventos
-        foreach ($contract->getEvents() as $event) {
-            $this->eventBus->publish($event);
-        }
-        $contract->clearEvents();
-    }
-} 
+		$contract->activarContrato();
+		$this->repository->save($contract);
+
+		// Publicar eventos
+		foreach ($contract->getEvents() as $event) {
+			$this->eventBus->publish($event);
+		}
+		$contract->clearEvents();
+	}
+}

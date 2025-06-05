@@ -8,9 +8,9 @@ use Commercial\Domain\Aggregates\Contract\Contract;
 
 interface ContractRepository
 {
-    public function findById(string $id): ?Contract;
-    public function save(Contract $contract): void;
-    public function delete(string $id): void;
-    public function findByPacienteId(string $pacienteId): array;
-    public function findAll(): array;
-} 
+	public function findById(string $id): ?Contract;
+	public function save(Contract $contract): string;
+	public function delete(string $id): void;
+	public function findByPacienteId(string $pacienteId): array;
+	public function findAll(): array;
+}

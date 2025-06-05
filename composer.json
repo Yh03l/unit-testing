@@ -9,6 +9,7 @@
         "php": "^8.2",
         "laravel/framework": "^11.40.0",
         "laravel/tinker": "^2.9",
+        "php-amqplib/php-amqplib": "^3.7",
         "sentry/sentry-laravel": "^4.13"
     },
     "require-dev": {

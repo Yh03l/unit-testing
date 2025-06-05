@@ -4,27 +4,46 @@ declare(strict_types=1);
 
 namespace Commercial\Infrastructure\Bus;
 
+use Commercial\Application\Commands\CommandResult;
 use Illuminate\Container\Container;
 
 class LaravelCommandBus implements CommandBus
 {
-    private Container $container;
+	private Container $container;
 
-    public function __construct(Container $container)
-    {
-        $this->container = $container;
-    }
+	public function __construct(Container $container)
+	{
+		$this->container = $container;
+	}
 
-    public function dispatch(object $command): void
-    {
-        $handler = $this->resolveHandler($command);
-        $handler($command);
-    }
+	public function dispatch(object $command): CommandResult
+	{
+		$handler = $this->container->make($this->getHandlerClass($command));
 
-    private function resolveHandler(object $command): object
-    {
-        $handlerClass = str_replace('Command', 'Handler', get_class($command));
-        $handlerClass = str_replace('\\Handlers\\', '\\Commands\\', $handlerClass);
-        return $this->container->make($handlerClass);
-    }
+		// Intentar primero el método handle, si no existe, intentar __invoke
+		if (method_exists($handler, 'handle')) {
+			return $handler->handle($command);
+		}
+
+		if (is_callable($handler)) {
+			return $handler($command);
+		}
+
+		throw new \RuntimeException(
+			sprintf(
+				'Handler %s debe implementar el método handle() o ser invocable',
+				get_class($handler)
+			)
+		);
+	}
+
+	private function getHandlerClass(object $command): string
+	{
+		$commandClass = get_class($command);
+		$commandNamespace = substr($commandClass, 0, strrpos($commandClass, '\\'));
+		$commandName = substr($commandClass, strrpos($commandClass, '\\') + 1);
+		$handlerName = str_replace('Command', 'Handler', $commandName);
+
+		return $commandNamespace . '\\' . $handlerName;
+	}
 }

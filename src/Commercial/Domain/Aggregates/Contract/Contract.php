@@ -11,112 +11,106 @@ use Commercial\Domain\ValueObjects\ContractDate;
 
 class Contract
 {
-    private string $id;
-    private string $paciente_id;
-    private string $servicio_id;
-    private ContractDate $fecha_contrato;
-    private string $estado;
-    private array $events = [];
+	private string $id;
+	private string $paciente_id;
+	private string $servicio_id;
+	private ContractDate $fecha_contrato;
+	private string $estado;
+	private array $events = [];
 
-    private function __construct(
-        string $id,
-        string $paciente_id,
-        string $servicio_id,
-        ContractDate $fecha_contrato,
-        string $estado
-    ) {
-        $this->id = $id;
-        $this->paciente_id = $paciente_id;
-        $this->servicio_id = $servicio_id;
-        $this->fecha_contrato = $fecha_contrato;
-        $this->estado = $estado;
-    }
+	private function __construct(
+		string $id,
+		string $paciente_id,
+		string $servicio_id,
+		ContractDate $fecha_contrato,
+		string $estado
+	) {
+		$this->id = $id;
+		$this->paciente_id = $paciente_id;
+		$this->servicio_id = $servicio_id;
+		$this->fecha_contrato = $fecha_contrato;
+		$this->estado = $estado;
+	}
 
-    public static function create(
-        string $id,
-        string $paciente_id,
-        string $servicio_id,
-        ContractDate $fecha_contrato
-    ): self {
-        $contract = new self(
-            $id,
-            $paciente_id,
-            $servicio_id,
-            $fecha_contrato,
-            'PENDIENTE'
-        );
-        
-        $contract->addEvent(new ContractCreated($id, $paciente_id, $servicio_id));
-        return $contract;
-    }
+	public static function create(
+		string $id,
+		string $paciente_id,
+		string $servicio_id,
+		ContractDate $fecha_contrato
+	): self {
+		$contract = new self($id, $paciente_id, $servicio_id, $fecha_contrato, 'PENDIENTE');
 
-    public function activarContrato(): void
-    {
-        if ($this->estado !== 'PENDIENTE') {
-            throw new \DomainException('Solo se pueden activar contratos pendientes');
-        }
+		$contract->addEvent(new ContractCreated($id, $paciente_id, $servicio_id));
+		return $contract;
+	}
 
-        $this->estado = 'ACTIVO';
-        $this->addEvent(new ContractActivated($this->id));
-    }
+	public function activarContrato(): void
+	{
+		if ($this->estado !== 'PENDIENTE') {
+			throw new \DomainException('Solo se pueden activar contratos pendientes');
+		}
 
-    public function cancelarContrato(): void
-    {
-        if ($this->estado === 'CANCELADO') {
-            throw new \DomainException('El contrato ya está cancelado');
-        }
+		$this->estado = 'ACTIVO';
+		$this->addEvent(new ContractActivated($this->id));
+	}
 
-        $this->estado = 'CANCELADO';
-        $this->addEvent(new ContractCancelled($this->id));
-    }
+	public function cancelarContrato(): void
+	{
+		if ($this->estado === 'CANCELADO') {
+			throw new \DomainException('El contrato ya está cancelado');
+		}
 
-    public function generarFactura(): void
-    {
-        if ($this->estado !== 'ACTIVO') {
-            throw new \DomainException('Solo se pueden generar facturas para contratos activos');
-        }
+		$this->estado = 'CANCELADO';
+		$this->addEvent(new ContractCancelled($this->id));
+	}
 
-        // Lógica para generar factura
-        // Esto podría emitir un evento de factura generada
-    }
+	public function generarFactura(): void
+	{
+		if ($this->estado !== 'ACTIVO') {
+			throw new \DomainException('Solo se pueden generar facturas para contratos activos');
+		}
 
-    public function getId(): string
-    {
-        return $this->id;
-    }
+		// Lógica para generar factura
+		// Esto podría emitir un evento de factura generada
+	}
 
-    public function getPacienteId(): string
-    {
-        return $this->paciente_id;
-    }
+	public function getId(): string
+	{
+		return $this->id;
+	}
 
-    public function getServicioId(): string
-    {
-        return $this->servicio_id;
-    }
+	public function getPacienteId(): string
+	{
+		return $this->paciente_id;
+	}
 
-    public function getFechaContrato(): ContractDate
-    {
-        return $this->fecha_contrato;
-    }
+	public function getServicioId(): string
+	{
+		return $this->servicio_id;
+	}
 
-    public function getEstado(): string
-    {
-        return $this->estado;
-    }
+	public function getFechaContrato(): ContractDate
+	{
+		return $this->fecha_contrato;
+	}
 
-    private function addEvent(object $event): void
-    {
-        $this->events[] = $event;
-    }
+	public function getEstado(): string
+	{
+		return $this->estado;
+	}
 
-    public function getEvents(): array
-    {
-        return $this->events;
-    }
+	private function addEvent(object $event): void
+	{
+		$this->events[] = $event;
+	}
 
-    public function clearEvents(): void
-    {
-        $this->events = [];
-    }
-} 
+	public function getEvents(): array
+	{
+		return $this->events;
+	}
+
+	public function clearEvents(): void
+	{
+		$this->events = [];
+	}
+}
