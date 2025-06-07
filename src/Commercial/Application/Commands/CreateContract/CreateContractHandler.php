@@ -7,6 +7,7 @@ namespace Commercial\Application\Commands\CreateContract;
 use Commercial\Domain\Aggregates\Contract\Contract;
 use Commercial\Domain\ValueObjects\ContractDate;
 use Commercial\Domain\Repositories\ContractRepository;
+use Commercial\Domain\Repositories\ServiceRepository;
 use Commercial\Infrastructure\EventBus\EventBus;
 use Commercial\Application\Commands\CommandResult;
 use Illuminate\Support\Str;
@@ -15,6 +16,7 @@ class CreateContractHandler
 {
 	public function __construct(
 		private readonly ContractRepository $repository,
+		private readonly ServiceRepository $serviceRepository,
 		private readonly EventBus $eventBus
 	) {}
 
@@ -28,6 +30,7 @@ class CreateContractHandler
 			$command->getPacienteId(),
 			$command->getServicioId(),
 			$contractDate,
+			$this->serviceRepository,
 			$command->getPlanAlimentarioId()
 		);
 

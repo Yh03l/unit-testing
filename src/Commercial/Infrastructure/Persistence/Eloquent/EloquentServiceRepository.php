@@ -14,124 +14,127 @@ use Carbon\Carbon;
 
 class EloquentServiceRepository implements ServiceRepository
 {
-    public function save(Service $service): void
-    {
-        DB::transaction(function () use ($service) {
-            $model = ServiceModel::findOrNew($service->getId());
-            
-            $model->fill([
-                'id' => $service->getId(),
-                'nombre' => $service->getNombre(),
-                'descripcion' => $service->getDescripcion(),
-                'tipo_servicio_id' => $service->getTipoServicioId(),
-                'estado' => $service->getEstado()->toString(),
-                'catalogo_id' => $service->getCatalogoId()
-            ]);
+	public function save(Service $service): void
+	{
+		DB::transaction(function () use ($service) {
+			$model = ServiceModel::findOrNew($service->getId());
 
-            $model->save();
+			$model->fill([
+				'id' => $service->getId(),
+				'nombre' => $service->getNombre(),
+				'descripcion' => $service->getDescripcion(),
+				'tipo_servicio_id' => $service->getTipoServicio()->toString(),
+				'estado' => $service->getEstado()->toString(),
+				'catalogo_id' => $service->getCatalogoId(),
+			]);
 
-            // Guardar el costo actual solo si es diferente al último registrado
-            $lastCost = ServiceCostModel::where('servicio_id', $service->getId())
-                ->latest('vigencia')
-                ->first();
+			$model->save();
 
-            $currentCost = $service->getCosto();
-            
-            if (!$lastCost || 
-                $lastCost->monto != $currentCost->getMonto() || 
-                $lastCost->moneda != $currentCost->getMoneda()
-            ) {
-                ServiceCostModel::create([
-                    'id' => Str::uuid()->toString(),
-                    'servicio_id' => $service->getId(),
-                    'monto' => $currentCost->getMonto(),
-                    'moneda' => $currentCost->getMoneda(),
-                    'vigencia' => $currentCost->getVigencia()
-                ]);
-            }
-        });
-    }
+			// Guardar el costo actual solo si es diferente al último registrado
+			$lastCost = ServiceCostModel::where('servicio_id', $service->getId())
+				->latest('vigencia')
+				->first();
 
-    public function findById(string $id): ?Service
-    {
-        $model = ServiceModel::with('costos')->find($id);
+			$currentCost = $service->getCosto();
 
-        if (!$model) {
-            return null;
-        }
+			if (
+				!$lastCost ||
+				$lastCost->monto != $currentCost->getMonto() ||
+				$lastCost->moneda != $currentCost->getMoneda()
+			) {
+				ServiceCostModel::create([
+					'id' => Str::uuid()->toString(),
+					'servicio_id' => $service->getId(),
+					'monto' => $currentCost->getMonto(),
+					'moneda' => $currentCost->getMoneda(),
+					'vigencia' => $currentCost->getVigencia(),
+				]);
+			}
+		});
+	}
 
-        return $this->toDomain($model);
-    }
+	public function findById(string $id): ?Service
+	{
+		$model = ServiceModel::with('costos')->find($id);
 
-    public function findAll(): array
-    {
-        return ServiceModel::with('costos')
-            ->get()
-            ->map(fn($model) => $this->toDomain($model))
-            ->all();
-    }
+		if (!$model) {
+			return null;
+		}
 
-    public function delete(string $id): void
-    {
-        ServiceModel::destroy($id);
-    }
+		return $this->toDomain($model);
+	}
 
-    public function findByStatus(ServiceStatus $status, ?string $catalogId = null): array
-    {
-        $query = ServiceModel::with('costos')
-            ->where('estado', $status->toString());
+	public function findAll(): array
+	{
+		return ServiceModel::with('costos')
+			->get()
+			->map(fn($model) => $this->toDomain($model))
+			->all();
+	}
 
-        if ($catalogId) {
-            $query->where('catalogo_id', $catalogId);
-        }
+	public function delete(string $id): void
+	{
+		ServiceModel::destroy($id);
+	}
 
-        return $query->get()
-            ->map(fn($model) => $this->toDomain($model))
-            ->all();
-    }
+	public function findByStatus(ServiceStatus $status, ?string $catalogId = null): array
+	{
+		$query = ServiceModel::with('costos')->where('estado', $status->toString());
 
-    public function getServiceCostHistory(string $serviceId): array
-    {
-        $costModels = ServiceCostModel::where('servicio_id', $serviceId)
-            ->orderBy('vigencia', 'desc')
-            ->get();
+		if ($catalogId) {
+			$query->where('catalogo_id', $catalogId);
+		}
 
-        return $costModels->map(function ($costModel) {
-            return new ServiceCost(
-                monto: (float) $costModel->monto,
-                moneda: $costModel->moneda,
-                vigencia: new \DateTimeImmutable($costModel->vigencia->format('Y-m-d H:i:s'))
-            );
-        })->all();
-    }
+		return $query->get()->map(fn($model) => $this->toDomain($model))->all();
+	}
 
-    private function toDomain(ServiceModel $model): Service
-    {
-        $currentCost = $model->costos()
-            ->where('vigencia', '>=', Carbon::now())
-            ->orderBy('vigencia', 'asc')
-            ->first();
+	public function getServiceCostHistory(string $serviceId): array
+	{
+		$costModels = ServiceCostModel::where('servicio_id', $serviceId)
+			->orderBy('vigencia', 'desc')
+			->get();
 
-        if (!$currentCost) {
-            $currentCost = $model->costos()->latest('vigencia')->first();
-        }
+		return $costModels
+			->map(function ($costModel) {
+				return new ServiceCost(
+					monto: (float) $costModel->monto,
+					moneda: $costModel->moneda,
+					vigencia: new \DateTimeImmutable($costModel->vigencia->format('Y-m-d H:i:s'))
+				);
+			})
+			->all();
+	}
 
-        if (!$currentCost) {
-            throw new \RuntimeException("No se encontró información de costo para el servicio {$model->id}");
-        }
+	private function toDomain(ServiceModel $model): Service
+	{
+		$currentCost = $model
+			->costos()
+			->where('vigencia', '>=', Carbon::now())
+			->orderBy('vigencia', 'asc')
+			->first();
 
-        return new Service(
-            id: $model->id,
-            nombre: $model->nombre,
-            descripcion: $model->descripcion,
-            costo: new ServiceCost(
-                monto: (float) $currentCost->monto,
-                moneda: $currentCost->moneda,
-                vigencia: new \DateTimeImmutable($currentCost->vigencia->format('Y-m-d H:i:s'))
-            ),
-            tipo_servicio_id: $model->tipo_servicio_id,
-            estado: ServiceStatus::fromString($model->estado),
-            catalogo_id: $model->catalogo_id
-        );
-    }
-} 
+		if (!$currentCost) {
+			$currentCost = $model->costos()->latest('vigencia')->first();
+		}
+
+		if (!$currentCost) {
+			throw new \RuntimeException(
+				"No se encontró información de costo para el servicio {$model->id}"
+			);
+		}
+
+		return new Service(
+			id: $model->id,
+			nombre: $model->nombre,
+			descripcion: $model->descripcion,
+			costo: new ServiceCost(
+				monto: (float) $currentCost->monto,
+				moneda: $currentCost->moneda,
+				vigencia: new \DateTimeImmutable($currentCost->vigencia->format('Y-m-d H:i:s'))
+			),
+			tipo_servicio: $model->tipo_servicio_id,
+			estado: ServiceStatus::fromString($model->estado),
+			catalogo_id: $model->catalogo_id
+		);
+	}
+}

@@ -13,8 +13,11 @@ class ContractModel extends Model
 
 	protected $table = 'contratos';
 	protected $primaryKey = 'id';
+	protected $keyType = 'string';
+	public $incrementing = false;
 
 	protected $fillable = [
+		'id',
 		'paciente_id',
 		'servicio_id',
 		'plan_alimentario_id',

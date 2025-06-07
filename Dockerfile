@@ -27,6 +27,15 @@ RUN docker-php-ext-install mbstring exif pcntl bcmath gd zip pdo_pgsql sockets
 # Install FFI extension
 RUN docker-php-ext-install ffi
 
+# Install and configure Xdebug
+RUN pecl install xdebug \
+    && docker-php-ext-enable xdebug \
+    && echo "xdebug.mode=debug" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
+    && echo "xdebug.client_host=host.docker.internal" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
+    && echo "xdebug.client_port=9202" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
+    && echo "xdebug.start_with_request=yes" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
+    && echo "xdebug.log=/var/log/xdebug.log" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
+
 # Configure GD library
 RUN docker-php-ext-configure gd --enable-gd \
     && docker-php-ext-install -j$(nproc) gd

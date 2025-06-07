@@ -159,6 +159,7 @@ return [
 		App\Providers\EventServiceProvider::class,
 		App\Providers\RouteServiceProvider::class, */
 		Commercial\Infrastructure\Providers\PlanAlimentarioServiceProvider::class,
+		Commercial\Infrastructure\Providers\ContractServiceProvider::class,
 	],
 
 	'aliases' => [

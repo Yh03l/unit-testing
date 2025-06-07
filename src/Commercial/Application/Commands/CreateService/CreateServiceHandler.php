@@ -39,7 +39,7 @@ final class CreateServiceHandler
 				moneda: $command->getMoneda(),
 				vigencia: $command->getVigencia()
 			),
-			tipo_servicio_id: $command->getTipoServicioId(),
+			tipo_servicio: $command->getTipoServicioId(),
 			estado: ServiceStatus::ACTIVO,
 			catalogo_id: $command->getCatalogoId()
 		);

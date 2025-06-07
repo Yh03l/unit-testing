@@ -8,13 +8,16 @@ use Commercial\Domain\Aggregates\Contract\Contract;
 use Commercial\Domain\Repositories\ContractRepository;
 use Commercial\Domain\ValueObjects\ContractDate;
 use Illuminate\Support\Facades\Log;
+use Commercial\Domain\Repositories\ServiceRepository;
 
 class EloquentContractRepository implements ContractRepository
 {
 	private ContractModel $model;
 
-	public function __construct(ContractModel $model)
-	{
+	public function __construct(
+		ContractModel $model,
+		private readonly ServiceRepository $serviceRepository
+	) {
 		$this->model = $model;
 	}
 
@@ -93,6 +96,7 @@ class EloquentContractRepository implements ContractRepository
 				\DateTimeImmutable::createFromMutable($model->fecha_inicio),
 				$model->fecha_fin ? \DateTimeImmutable::createFromMutable($model->fecha_fin) : null
 			),
+			$this->serviceRepository,
 			$model->plan_alimentario_id
 		);
 	}

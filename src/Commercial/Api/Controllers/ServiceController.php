@@ -34,7 +34,9 @@ class ServiceController
 	{
 		try {
 			$services = $this->queryBus->dispatch(new ListActiveServicesQuery());
-			return new JsonResponse(['data' => $services]);
+			return new JsonResponse([
+				'data' => array_map(fn($service) => $service->toArray(), $services),
+			]);
 		} catch (CatalogException $e) {
 			return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
 		} catch (\Exception $e) {
@@ -49,7 +51,7 @@ class ServiceController
 	{
 		try {
 			$service = $this->queryBus->dispatch(new GetServiceDetailsQuery($id));
-			return new JsonResponse(['data' => $service]);
+			return new JsonResponse(['data' => $service->toArray()]);
 		} catch (CatalogException $e) {
 			return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_NOT_FOUND);
 		} catch (\Exception $e) {
@@ -87,7 +89,7 @@ class ServiceController
 			return new JsonResponse(
 				[
 					'message' => 'Servicio creado exitosamente',
-					'data' => $service,
+					'data' => $service->toArray(),
 				],
 				Response::HTTP_CREATED
 			);
@@ -125,7 +127,7 @@ class ServiceController
 
 			return new JsonResponse([
 				'message' => 'Servicio actualizado exitosamente',
-				'data' => $service,
+				'data' => $service->toArray(),
 			]);
 		} catch (CatalogException $e) {
 			return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_NOT_FOUND);
@@ -158,7 +160,7 @@ class ServiceController
 
 			return new JsonResponse([
 				'message' => 'Estado del servicio actualizado exitosamente',
-				'data' => $service,
+				'data' => $service->toArray(),
 			]);
 		} catch (CatalogException $e) {
 			return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_NOT_FOUND);
@@ -193,7 +195,7 @@ class ServiceController
 
 			return new JsonResponse([
 				'message' => 'Costo del servicio actualizado exitosamente',
-				'data' => $service,
+				'data' => $service->toArray(),
 			]);
 		} catch (CatalogException $e) {
 			return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_NOT_FOUND);
