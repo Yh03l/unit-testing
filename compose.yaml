@@ -18,8 +18,6 @@ services:
         depends_on:
             commercial-db:
                 condition: service_healthy
-            # rabbitmq:
-            #     condition: service_started
         environment:
             DB_CONNECTION: pgsql
             DB_HOST: commercial-db
@@ -61,29 +59,6 @@ services:
             retries: 5
             start_period: 10s
 
-    # message-broker:
-    #     image: rabbitmq:3.13.7-management
-    #     container_name: commercial-message-broker
-    #     ports:
-    #         - '5673:5672'
-    #         - '15673:15672'
-    #     volumes:
-    #         - ./.rabbitmq/definitions.json:/etc/rabbitmq/definitions.json
-    #         - commercial_rabbitmq_data:/var/lib/rabbitmq
-    #     environment:
-    #         RABBITMQ_DEFAULT_USER: admin
-    #         RABBITMQ_DEFAULT_PASS: admin
-    #         RABBITMQ_DEFAULT_VHOST: /
-    #         RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: '-rabbitmq_management load_definitions "/etc/rabbitmq/definitions.json"'
-    #     networks:
-    #         - nurtricenter-net
-    #     healthcheck:
-    #         test: ['CMD-SHELL', 'rabbitmq-diagnostics -q ping']
-    #         interval: 30s
-    #         timeout: 3s
-    #         retries: 5
-
 volumes:
     commercial_vendor:
     commercial_db_data:
-    # commercial_rabbitmq_data:

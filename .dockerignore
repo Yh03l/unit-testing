@@ -57,13 +57,3 @@ coverage
 *.json
 !composer.json
 composer.lock
-
-# Archivos adicionales
-.editorconfig
-.phpunit.result.cache
-.php_cs.cache
-.php-cs-fixer.cache
-package-lock.json
-yarn.lock
-.DS_Store
-Thumbs.db
