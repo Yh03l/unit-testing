@@ -19,8 +19,8 @@ use Illuminate\Support\Facades\Log;
 $connection = new AMQPStreamConnection(
 	env('RABBITMQ_HOST', 'rabbitmq'),
 	(int) env('RABBITMQ_PORT', 5672),
-	env('RABBITMQ_USER', 'commercial'),
-	env('RABBITMQ_PASSWORD', 'commercial123'),
+	env('RABBITMQ_USER', 'admin'),
+	env('RABBITMQ_PASSWORD', 'admin'),
 	env('RABBITMQ_VHOST', '/')
 );
 
