@@ -17,10 +17,33 @@ final class PlanAlimentarioAsignadoConsumer
 	public function __invoke(AMQPMessage $message): void
 	{
 		try {
-			$data = json_decode($message->body, true);
+			// Limpiar el mensaje de posibles espacios y saltos de línea
+			$cleanJson = trim(preg_replace('/\s+/', '', $message->body));
+
+			// Reemplazar comillas escapadas por comillas normales
+			$cleanJson = str_replace('\"', '"', $cleanJson);
+
+			// Si el JSON está envuelto en comillas dobles, removerlas
+			if (str_starts_with($cleanJson, '"') && str_ends_with($cleanJson, '"')) {
+				$cleanJson = substr($cleanJson, 1, -1);
+			}
+
+			$data = json_decode($cleanJson, true);
 
 			if (json_last_error() !== JSON_ERROR_NONE) {
-				throw new \RuntimeException('Error decodificando JSON: ' . json_last_error_msg());
+				throw new \RuntimeException(
+					'Error decodificando JSON: ' .
+						json_last_error_msg() .
+						'. JSON recibido: ' .
+						$cleanJson
+				);
+			}
+
+			// Validar campos requeridos
+			if (!isset($data['idContrato']) || !isset($data['idPlanAlimentario'])) {
+				throw new \RuntimeException(
+					'JSON inválido: faltan campos requeridos. Se requiere idContrato e idPlanAlimentario'
+				);
 			}
 
 			$dto = PlanAlimentarioAsignadoDTO::fromArray($data);

@@ -18,11 +18,13 @@ RUN apt-get update -y && apt-get install -y \
     unzip zip \
     libpq-dev \
     libffi-dev \
-    cron \  
+    cron \
+    supervisor \
+    libicu-dev \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
-RUN docker-php-ext-install mbstring exif pcntl bcmath gd zip pdo_pgsql sockets
+RUN docker-php-ext-install mbstring exif pcntl bcmath gd zip pdo_pgsql sockets intl
 
 # Install FFI extension
 RUN docker-php-ext-install ffi
@@ -48,6 +50,14 @@ COPY . /var/www/html
 
 # Copy the Apache vhost file into the container to configure Apache
 COPY vhost/000-default.conf /etc/apache2/sites-available/000-default.conf
+
+# Copy and setup the events processing script
+COPY scripts/process-events.sh /usr/local/bin/process-events.sh
+RUN chmod +x /usr/local/bin/process-events.sh
+
+# Create log directory for Supervisor
+RUN mkdir -p /var/log/supervisor && \
+    chown -R www-data:www-data /var/log/supervisor
 
 # Set proper permissions for the web directory
 RUN chown -R www-data:www-data /var/www/html \

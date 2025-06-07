@@ -18,5 +18,12 @@ crontab /etc/cron.d/publish-events
 # Iniciar cron
 service cron start
 
-# Start Apache (this keeps the container running)
-apache2-foreground
+
+# Iniciar Apache en segundo plano
+apache2-foreground &
+
+# Iniciar el script de procesamiento de eventos en segundo plano
+/usr/local/bin/process-events.sh > /var/log/events-processor.log 2>&1 &
+
+# Mantener el contenedor en ejecución
+tail -f /var/log/apache2/error.log
