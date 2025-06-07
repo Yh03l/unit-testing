@@ -24,7 +24,7 @@ RUN apt-get update -y && apt-get install -y \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
-RUN docker-php-ext-install mbstring exif pcntl bcmath gd zip pdo_pgsql sockets intl
+RUN docker-php-ext-install mbstring exif pcntl bcmath gd zip pdo_pgsql sockets intl ffi
 
 # Configure GD library
 RUN docker-php-ext-configure gd --enable-gd \
