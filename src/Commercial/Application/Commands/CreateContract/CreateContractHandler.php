@@ -27,7 +27,8 @@ class CreateContractHandler
 			$contractId,
 			$command->getPacienteId(),
 			$command->getServicioId(),
-			$contractDate
+			$contractDate,
+			$command->getPlanAlimentarioId()
 		);
 
 		$this->repository->save($contract);

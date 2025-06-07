@@ -9,28 +9,29 @@ use Commercial\Application\DTOs\ContractDTO;
 
 class GetContractHandler
 {
-    private ContractRepository $repository;
+	private ContractRepository $repository;
 
-    public function __construct(ContractRepository $repository)
-    {
-        $this->repository = $repository;
-    }
+	public function __construct(ContractRepository $repository)
+	{
+		$this->repository = $repository;
+	}
 
-    public function handle(GetContractQuery $query): ?ContractDTO
-    {
-        $contract = $this->repository->findById($query->getContractId());
+	public function handle(GetContractQuery $query): ?ContractDTO
+	{
+		$contract = $this->repository->findById($query->getContractId());
 
-        if ($contract === null) {
-            return null;
-        }
+		if ($contract === null) {
+			return null;
+		}
 
-        return new ContractDTO(
-            $contract->getId(),
-            $contract->getPacienteId(),
-            $contract->getServicioId(),
-            $contract->getFechaContrato()->getFechaInicio(),
-            $contract->getFechaContrato()->getFechaFin(),
-            $contract->getEstado()
-        );
-    }
-} 
+		return new ContractDTO(
+			$contract->getId(),
+			$contract->getPacienteId(),
+			$contract->getServicioId(),
+			$contract->getPlanAlimentarioId(),
+			$contract->getFechaContrato()->getFechaInicio(),
+			$contract->getFechaContrato()->getFechaFin(),
+			$contract->getEstado()
+		);
+	}
+}

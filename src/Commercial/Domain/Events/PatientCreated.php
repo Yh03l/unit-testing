@@ -71,4 +71,19 @@ class PatientCreated implements DomainEvent
 	{
 		return self::EXCHANGE_NAME;
 	}
+
+	public function toArray(): array
+	{
+		return [
+			'id' => $this->id,
+			'email' => $this->email,
+			'nombre' => $this->nombre,
+			'apellido' => $this->apellido,
+			'fechaNacimiento' => $this->fechaNacimiento->format('Y-m-d\TH:i:s.u\Z'),
+			'genero' => $this->genero,
+			'direccion' => $this->direccion,
+			'telefono' => $this->telefono,
+			'occurredOn' => $this->occurredOn->format('Y-m-d\TH:i:s.u\Z'),
+		];
+	}
 }

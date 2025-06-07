@@ -88,21 +88,7 @@ class RabbitMQEventBus implements EventBus
 
 	private function serializeEvent(object $event): array
 	{
-		$data = [];
-		$reflection = new \ReflectionClass($event);
-
-		foreach ($reflection->getProperties() as $property) {
-			$property->setAccessible(true);
-			$value = $property->getValue($event);
-
-			if ($value instanceof \DateTimeImmutable) {
-				$value = $value->format('Y-m-d\TH:i:s.u\Z');
-			}
-
-			$data[$property->getName()] = $value;
-		}
-
-		return $data;
+		return $event->toArray();
 	}
 
 	public function __destruct()

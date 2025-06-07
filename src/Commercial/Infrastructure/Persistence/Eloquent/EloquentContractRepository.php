@@ -38,6 +38,7 @@ class EloquentContractRepository implements ContractRepository
 			'id' => $contract->getId(),
 			'paciente_id' => $contract->getPacienteId(),
 			'servicio_id' => $contract->getServicioId(),
+			'plan_alimentario_id' => $contract->getPlanAlimentarioId(),
 			'estado' => $contract->getEstado(),
 			'fecha_inicio' => $contract
 				->getFechaContrato()
@@ -51,6 +52,7 @@ class EloquentContractRepository implements ContractRepository
 			[
 				'paciente_id' => $contract->getPacienteId(),
 				'servicio_id' => $contract->getServicioId(),
+				'plan_alimentario_id' => $contract->getPlanAlimentarioId(),
 				'estado' => $contract->getEstado(),
 				'fecha_inicio' => $contract->getFechaContrato()->getFechaInicio(),
 				'fecha_fin' => $contract->getFechaContrato()->getFechaFin(),
@@ -90,7 +92,8 @@ class EloquentContractRepository implements ContractRepository
 			new ContractDate(
 				\DateTimeImmutable::createFromMutable($model->fecha_inicio),
 				$model->fecha_fin ? \DateTimeImmutable::createFromMutable($model->fecha_fin) : null
-			)
+			),
+			$model->plan_alimentario_id
 		);
 	}
 }

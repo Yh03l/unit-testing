@@ -9,21 +9,22 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class ContractModel extends Model
 {
-    use HasUuids;
+	use HasUuids;
 
-    protected $table = 'contratos';
-    protected $primaryKey = 'id';
+	protected $table = 'contratos';
+	protected $primaryKey = 'id';
 
-    protected $fillable = [
-        'paciente_id',
-        'servicio_id',
-        'estado',
-        'fecha_inicio',
-        'fecha_fin'
-    ];
+	protected $fillable = [
+		'paciente_id',
+		'servicio_id',
+		'plan_alimentario_id',
+		'estado',
+		'fecha_inicio',
+		'fecha_fin',
+	];
 
-    protected $casts = [
-        'fecha_inicio' => 'datetime',
-        'fecha_fin' => 'datetime'
-    ];
-} 
+	protected $casts = [
+		'fecha_inicio' => 'datetime',
+		'fecha_fin' => 'datetime',
+	];
+}

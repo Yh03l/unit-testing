@@ -33,7 +33,8 @@ class ContractController extends Controller
 				: null,
 			$request->validated('fecha_fin')
 				? new \DateTimeImmutable($request->validated('fecha_fin'))
-				: null
+				: null,
+			$request->validated('plan_alimentario_id')
 		);
 
 		try {
@@ -63,30 +64,22 @@ class ContractController extends Controller
 
 	public function get(string $id): JsonResponse
 	{
-		try {
-			$contract = $this->queryBus->dispatch(new GetContractQuery($id));
+		$contract = $this->queryBus->dispatch(new GetContractQuery($id));
 
-			if ($contract === null) {
-				return new JsonResponse(
-					['error' => 'Contrato no encontrado'],
-					Response::HTTP_NOT_FOUND
-				);
-			}
-
-			return new JsonResponse(['data' => $contract], Response::HTTP_OK);
-		} catch (\Exception $e) {
+		if (!$contract) {
 			return new JsonResponse(
-				['error' => $e->getMessage()],
-				Response::HTTP_INTERNAL_SERVER_ERROR
+				['error' => 'Contrato no encontrado'],
+				Response::HTTP_NOT_FOUND
 			);
 		}
+
+		return new JsonResponse(['data' => $contract]);
 	}
 
 	public function activate(string $id): JsonResponse
 	{
 		try {
-			$command = new ActivateContractCommand($id);
-			$result = $this->commandBus->dispatch($command);
+			$result = $this->commandBus->dispatch(new ActivateContractCommand($id));
 
 			if (!$result->isSuccess()) {
 				return new JsonResponse(
@@ -95,16 +88,7 @@ class ContractController extends Controller
 				);
 			}
 
-			// Obtener los datos actualizados del contrato
-			$contract = $this->queryBus->dispatch(new GetContractQuery($id));
-
-			return new JsonResponse(
-				[
-					'message' => 'Contrato activado exitosamente',
-					'data' => $contract,
-				],
-				Response::HTTP_OK
-			);
+			return new JsonResponse(['message' => $result->getMessage()]);
 		} catch (\DomainException $e) {
 			return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
 		}
@@ -113,8 +97,7 @@ class ContractController extends Controller
 	public function cancel(string $id): JsonResponse
 	{
 		try {
-			$command = new CancelContractCommand($id);
-			$result = $this->commandBus->dispatch($command);
+			$result = $this->commandBus->dispatch(new CancelContractCommand($id));
 
 			if (!$result->isSuccess()) {
 				return new JsonResponse(
@@ -123,16 +106,7 @@ class ContractController extends Controller
 				);
 			}
 
-			// Obtener los datos actualizados del contrato
-			$contract = $this->queryBus->dispatch(new GetContractQuery($id));
-
-			return new JsonResponse(
-				[
-					'message' => 'Contrato cancelado exitosamente',
-					'data' => $contract,
-				],
-				Response::HTTP_OK
-			);
+			return new JsonResponse(['message' => $result->getMessage()]);
 		} catch (\DomainException $e) {
 			return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
 		}
@@ -140,14 +114,8 @@ class ContractController extends Controller
 
 	public function getByPaciente(string $pacienteId): JsonResponse
 	{
-		try {
-			$contracts = $this->queryBus->dispatch(new ListContractsByPacienteQuery($pacienteId));
-			return new JsonResponse(['data' => $contracts], Response::HTTP_OK);
-		} catch (\Exception $e) {
-			return new JsonResponse(
-				['error' => $e->getMessage()],
-				Response::HTTP_INTERNAL_SERVER_ERROR
-			);
-		}
+		$contracts = $this->queryBus->dispatch(new ListContractsByPacienteQuery($pacienteId));
+
+		return new JsonResponse(['data' => $contracts]);
 	}
 }

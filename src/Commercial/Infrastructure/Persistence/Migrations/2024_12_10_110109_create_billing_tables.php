@@ -15,6 +15,10 @@ return new class extends Migration {
 			$table->uuid('id')->primary();
 			$table->foreignUuid('paciente_id')->constrained('pacientes');
 			$table->foreignUuid('servicio_id')->constrained('servicios');
+			$table
+				->uuid('plan_alimentario_id')
+				->nullable()
+				->comment('ID del plan alimentario asignado al paciente del contrato');
 			$table->dateTime('fecha_inicio');
 			$table->dateTime('fecha_fin')->nullable();
 			$table

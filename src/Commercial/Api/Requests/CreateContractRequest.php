@@ -21,6 +21,7 @@ class CreateContractRequest extends FormRequest
 		return [
 			'paciente_id' => 'required|uuid|exists:pacientes,id',
 			'servicio_id' => 'required|uuid|exists:servicios,id',
+			'plan_alimentario_id' => 'nullable|uuid',
 			'fecha_inicio' => 'required|date',
 			'fecha_fin' => 'nullable|date|after:fecha_inicio',
 		];
