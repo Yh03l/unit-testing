@@ -6,26 +6,27 @@ namespace Commercial\Application\Commands\DeleteCatalog;
 
 use Commercial\Domain\Repositories\CatalogRepository;
 use Commercial\Domain\Exceptions\CatalogException;
+use Commercial\Application\Commands\CommandResult;
 
 final class DeleteCatalogHandler
 {
-    public function __construct(
-        private readonly CatalogRepository $catalogRepository
-    ) {}
+	public function __construct(private readonly CatalogRepository $catalogRepository) {}
 
-    public function __invoke(DeleteCatalogCommand $command): void
-    {
-        $catalog = $this->catalogRepository->findById($command->id);
+	public function __invoke(DeleteCatalogCommand $command): CommandResult
+	{
+		$catalog = $this->catalogRepository->findById($command->id);
 
-        if (!$catalog) {
-            throw CatalogException::notFound($command->id);
-        }
+		if (!$catalog) {
+			throw CatalogException::notFound($command->id);
+		}
 
-        $this->catalogRepository->delete($command->id);
-    }
+		$this->catalogRepository->delete($command->id);
 
-    public function handle(DeleteCatalogCommand $command): void
-    {
-        $this->__invoke($command);
-    }
-} 
+		return CommandResult::success($command->id, 'Catálogo eliminado exitosamente');
+	}
+
+	public function handle(DeleteCatalogCommand $command): CommandResult
+	{
+		return $this->__invoke($command);
+	}
+}

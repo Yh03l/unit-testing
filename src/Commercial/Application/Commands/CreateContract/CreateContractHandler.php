@@ -13,32 +13,24 @@ use Illuminate\Support\Str;
 
 class CreateContractHandler
 {
-	private ContractRepository $repository;
-	private EventBus $eventBus;
-
-	public function __construct(ContractRepository $repository, EventBus $eventBus)
-	{
-		$this->repository = $repository;
-		$this->eventBus = $eventBus;
-	}
+	public function __construct(
+		private readonly ContractRepository $repository,
+		private readonly EventBus $eventBus
+	) {}
 
 	public function __invoke(CreateContractCommand $command): CommandResult
 	{
-		return $this->handle($command);
-	}
-
-	public function handle(CreateContractCommand $command): CommandResult
-	{
 		$contractDate = new ContractDate($command->getFechaInicio(), $command->getFechaFin());
+		$contractId = (string) Str::uuid();
 
 		$contract = Contract::create(
-			(string) Str::uuid(),
+			$contractId,
 			$command->getPacienteId(),
 			$command->getServicioId(),
 			$contractDate
 		);
 
-		$contractId = $this->repository->save($contract);
+		$this->repository->save($contract);
 
 		// Publicar eventos
 		foreach ($contract->getEvents() as $event) {
@@ -47,5 +39,10 @@ class CreateContractHandler
 		$contract->clearEvents();
 
 		return CommandResult::success($contractId, 'Contrato creado exitosamente');
+	}
+
+	public function handle(CreateContractCommand $command): CommandResult
+	{
+		return $this->__invoke($command);
 	}
 }

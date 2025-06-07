@@ -15,44 +15,65 @@ use Illuminate\Routing\Controller;
 
 class UserController extends Controller
 {
-    private CommandBus $commandBus;
-    private QueryBus $queryBus;
+	public function __construct(
+		private readonly CommandBus $commandBus,
+		private readonly QueryBus $queryBus
+	) {}
 
-    public function __construct(CommandBus $commandBus, QueryBus $queryBus)
-    {
-        $this->commandBus = $commandBus;
-        $this->queryBus = $queryBus;
-    }
+	public function create(CreateUserRequest $request): JsonResponse
+	{
+		try {
+			$command = new CreateUserCommand(
+				nombre: $request->validated('nombre'),
+				apellido: $request->validated('apellido'),
+				email: $request->validated('email'),
+				tipoUsuarioId: $request->validated('tipo_usuario_id')
+			);
 
-    public function create(CreateUserRequest $request): JsonResponse
-    {
-        $command = new CreateUserCommand(
-            $request->getNombre(),
-            $request->getApellido(),
-            $request->getEmail(),
-            $request->getTipoUsuarioId()
-        );
+			$result = $this->commandBus->dispatch($command);
 
-        try {
-            $this->commandBus->dispatch($command);
-            return new JsonResponse(['message' => 'Usuario creado exitosamente'], Response::HTTP_CREATED);
-        } catch (\DomainException $e) {
-            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
-        }
-    }
+			if (!$result->isSuccess()) {
+				return new JsonResponse(
+					['error' => $result->getMessage()],
+					Response::HTTP_BAD_REQUEST
+				);
+			}
 
-    public function getByEmail(string $email): JsonResponse
-    {
-        $query = new GetUserByEmailQuery($email);
+			// Obtener los datos del usuario creado
+			$user = $this->queryBus->dispatch(
+				new GetUserByEmailQuery($request->validated('email'))
+			);
 
-        try {
-            $user = $this->queryBus->ask($query);
-            if ($user === null) {
-                return new JsonResponse(['error' => 'Usuario no encontrado'], Response::HTTP_NOT_FOUND);
-            }
-            return new JsonResponse($user, Response::HTTP_OK);
-        } catch (\Exception $e) {
-            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
-    }
-} 
+			return new JsonResponse(
+				[
+					'message' => 'Usuario creado exitosamente',
+					'data' => $user,
+				],
+				Response::HTTP_CREATED
+			);
+		} catch (\DomainException $e) {
+			return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
+		}
+	}
+
+	public function getByEmail(string $email): JsonResponse
+	{
+		try {
+			$user = $this->queryBus->dispatch(new GetUserByEmailQuery($email));
+
+			if ($user === null) {
+				return new JsonResponse(
+					['error' => 'Usuario no encontrado'],
+					Response::HTTP_NOT_FOUND
+				);
+			}
+
+			return new JsonResponse(['data' => $user], Response::HTTP_OK);
+		} catch (\Exception $e) {
+			return new JsonResponse(
+				['error' => $e->getMessage()],
+				Response::HTTP_INTERNAL_SERVER_ERROR
+			);
+		}
+	}
+}

@@ -7,30 +7,35 @@ namespace Commercial\Application\Commands\CreateCatalog;
 use Commercial\Domain\Repositories\CatalogRepository;
 use Commercial\Domain\Aggregates\Catalog\Catalog;
 use Commercial\Infrastructure\EventBus\EventBus;
+use Commercial\Application\Commands\CommandResult;
 use Illuminate\Support\Str;
 
 class CreateCatalogHandler
 {
-    public function __construct(
-        private readonly CatalogRepository $repository,
-        private readonly EventBus $eventBus
-    ) {}
+	public function __construct(
+		private readonly CatalogRepository $repository,
+		private readonly EventBus $eventBus
+	) {}
 
-    public function __invoke(CreateCatalogCommand $command): void
-    {
-        $catalog = Catalog::create(
-            id: Str::uuid()->toString(),
-            nombre: $command->getNombre(),
-            estado: $command->getEstado()
-        );
+	public function __invoke(CreateCatalogCommand $command): CommandResult
+	{
+		$catalogId = Str::uuid()->toString();
 
-        $this->repository->save($catalog);
+		$catalog = Catalog::create(
+			id: $catalogId,
+			nombre: $command->getNombre(),
+			estado: $command->getEstado()
+		);
 
-        // Publicar eventos
-        foreach ($catalog->getEvents() as $event) {
-            $this->eventBus->publish($event);
-        }
+		$this->repository->save($catalog);
 
-        $catalog->clearEvents();
-    }
-} 
+		// Publicar eventos
+		foreach ($catalog->getEvents() as $event) {
+			$this->eventBus->publish($event);
+		}
+
+		$catalog->clearEvents();
+
+		return CommandResult::success($catalogId, 'Catálogo creado exitosamente');
+	}
+}

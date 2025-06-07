@@ -4,24 +4,24 @@ declare(strict_types=1);
 
 namespace Commercial\Domain\Events;
 
-class UserUpdated
+class UserUpdated implements DomainEvent
 {
-    private string $userId;
-    private \DateTimeImmutable $occurredOn;
+	private string $userId;
+	private \DateTimeImmutable $occurredOn;
 
-    public function __construct(string $userId)
-    {
-        $this->userId = $userId;
-        $this->occurredOn = new \DateTimeImmutable();
-    }
+	public function __construct(string $userId)
+	{
+		$this->userId = $userId;
+		$this->occurredOn = new \DateTimeImmutable();
+	}
 
-    public function getUserId(): string
-    {
-        return $this->userId;
-    }
+	public function getUserId(): string
+	{
+		return $this->userId;
+	}
 
-    public function getOccurredOn(): \DateTimeImmutable
-    {
-        return $this->occurredOn;
-    }
-} 
+	public function getOccurredOn(): \DateTimeImmutable
+	{
+		return $this->occurredOn;
+	}
+}

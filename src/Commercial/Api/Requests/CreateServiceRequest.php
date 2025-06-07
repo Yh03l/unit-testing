@@ -7,6 +7,7 @@ namespace Commercial\Api\Requests;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Commercial\Domain\Enums\TipoServicio;
 
 class CreateServiceRequest extends FormRequest
 {
@@ -23,7 +24,11 @@ class CreateServiceRequest extends FormRequest
 			'monto' => ['required', 'numeric', 'min:0'],
 			'moneda' => ['required', 'string', 'in:BOB,USD'],
 			'vigencia' => ['required', 'date'],
-			'tipo_servicio_id' => ['required', 'string', 'in:asesoramiento,catering'],
+			'tipo_servicio_id' => [
+				'required',
+				'string',
+				'in:' . implode(',', TipoServicio::values()),
+			],
 			'catalogo_id' => ['required', 'string', 'exists:catalogos,id'],
 		];
 	}
@@ -46,16 +51,17 @@ class CreateServiceRequest extends FormRequest
 		];
 	}
 
-	protected function prepareForValidation(): void
-	{
-		$this->merge([
-			'monto' => $this->input('monto', 0),
-			'vigencia' => $this->input('vigencia', now()->format('Y-m-d H:i:s')),
-		]);
-	}
-
 	protected function failedValidation(Validator $validator)
 	{
-		throw new HttpResponseException(response()->json($validator->errors(), 422));
+		throw new HttpResponseException(
+			response()->json(
+				[
+					'success' => false,
+					'message' => 'Validation failed',
+					'errors' => $validator->errors(),
+				],
+				422
+			)
+		);
 	}
 }

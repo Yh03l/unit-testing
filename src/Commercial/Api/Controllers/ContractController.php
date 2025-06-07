@@ -18,14 +18,10 @@ use Illuminate\Routing\Controller;
 
 class ContractController extends Controller
 {
-	private CommandBus $commandBus;
-	private QueryBus $queryBus;
-
-	public function __construct(CommandBus $commandBus, QueryBus $queryBus)
-	{
-		$this->commandBus = $commandBus;
-		$this->queryBus = $queryBus;
-	}
+	public function __construct(
+		private readonly CommandBus $commandBus,
+		private readonly QueryBus $queryBus
+	) {}
 
 	public function create(CreateContractRequest $request): JsonResponse
 	{
@@ -67,17 +63,17 @@ class ContractController extends Controller
 
 	public function get(string $id): JsonResponse
 	{
-		$query = new GetContractQuery($id);
-
 		try {
-			$contract = $this->queryBus->dispatch($query);
+			$contract = $this->queryBus->dispatch(new GetContractQuery($id));
+
 			if ($contract === null) {
 				return new JsonResponse(
 					['error' => 'Contrato no encontrado'],
 					Response::HTTP_NOT_FOUND
 				);
 			}
-			return new JsonResponse($contract, Response::HTTP_OK);
+
+			return new JsonResponse(['data' => $contract], Response::HTTP_OK);
 		} catch (\Exception $e) {
 			return new JsonResponse(
 				['error' => $e->getMessage()],
@@ -88,18 +84,25 @@ class ContractController extends Controller
 
 	public function activate(string $id): JsonResponse
 	{
-		$command = new ActivateContractCommand($id);
-
 		try {
+			$command = new ActivateContractCommand($id);
 			$result = $this->commandBus->dispatch($command);
+
 			if (!$result->isSuccess()) {
 				return new JsonResponse(
 					['error' => $result->getMessage()],
 					Response::HTTP_BAD_REQUEST
 				);
 			}
+
+			// Obtener los datos actualizados del contrato
+			$contract = $this->queryBus->dispatch(new GetContractQuery($id));
+
 			return new JsonResponse(
-				['message' => 'Contrato activado exitosamente'],
+				[
+					'message' => 'Contrato activado exitosamente',
+					'data' => $contract,
+				],
 				Response::HTTP_OK
 			);
 		} catch (\DomainException $e) {
@@ -109,18 +112,25 @@ class ContractController extends Controller
 
 	public function cancel(string $id): JsonResponse
 	{
-		$command = new CancelContractCommand($id);
-
 		try {
+			$command = new CancelContractCommand($id);
 			$result = $this->commandBus->dispatch($command);
+
 			if (!$result->isSuccess()) {
 				return new JsonResponse(
 					['error' => $result->getMessage()],
 					Response::HTTP_BAD_REQUEST
 				);
 			}
+
+			// Obtener los datos actualizados del contrato
+			$contract = $this->queryBus->dispatch(new GetContractQuery($id));
+
 			return new JsonResponse(
-				['message' => 'Contrato cancelado exitosamente'],
+				[
+					'message' => 'Contrato cancelado exitosamente',
+					'data' => $contract,
+				],
 				Response::HTTP_OK
 			);
 		} catch (\DomainException $e) {
@@ -130,11 +140,9 @@ class ContractController extends Controller
 
 	public function getByPaciente(string $pacienteId): JsonResponse
 	{
-		$query = new ListContractsByPacienteQuery($pacienteId);
-
 		try {
-			$contracts = $this->queryBus->dispatch($query);
-			return new JsonResponse($contracts, Response::HTTP_OK);
+			$contracts = $this->queryBus->dispatch(new ListContractsByPacienteQuery($pacienteId));
+			return new JsonResponse(['data' => $contracts], Response::HTTP_OK);
 		} catch (\Exception $e) {
 			return new JsonResponse(
 				['error' => $e->getMessage()],

@@ -47,8 +47,17 @@ class CreateContractRequest extends FormRequest
 		$request->replace($data);
 	}
 
-	protected function failedValidation(Validator $validator)
+	public function failedValidation(Validator $validator)
 	{
-		throw new HttpResponseException(response()->json($validator->errors(), 422));
+		throw new HttpResponseException(
+			response()->json(
+				[
+					'success' => false,
+					'message' => 'Validation failed',
+					'errors' => $validator->errors(),
+				],
+				422
+			)
+		);
 	}
 }

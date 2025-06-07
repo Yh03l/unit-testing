@@ -28,7 +28,7 @@ class CatalogController
 	public function index(): JsonResponse
 	{
 		try {
-			$catalogs = $this->queryBus->ask(new ListCatalogsQuery());
+			$catalogs = $this->queryBus->dispatch(new ListCatalogsQuery());
 			return new JsonResponse($catalogs);
 		} catch (\Exception $e) {
 			return new JsonResponse(
@@ -41,7 +41,7 @@ class CatalogController
 	public function show(string $id): JsonResponse
 	{
 		try {
-			$catalog = $this->queryBus->ask(new GetCatalogQuery($id));
+			$catalog = $this->queryBus->dispatch(new GetCatalogQuery($id));
 			return new JsonResponse($catalog);
 		} catch (CatalogException $e) {
 			return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_NOT_FOUND);
@@ -61,10 +61,22 @@ class CatalogController
 				estado: ServiceStatus::fromString('activo')
 			);
 
-			$this->commandBus->dispatch($command);
+			$result = $this->commandBus->dispatch($command);
+
+			if (!$result->isSuccess()) {
+				return new JsonResponse(
+					['error' => $result->getMessage()],
+					Response::HTTP_BAD_REQUEST
+				);
+			}
+
+			$catalog = $this->queryBus->dispatch(new GetCatalogQuery($result->getId()));
 
 			return new JsonResponse(
-				['message' => 'Catálogo creado exitosamente'],
+				[
+					'message' => 'Catálogo creado exitosamente',
+					'data' => $catalog,
+				],
 				Response::HTTP_CREATED
 			);
 		} catch (\Exception $e) {
@@ -78,7 +90,7 @@ class CatalogController
 	public function update(UpdateCatalogRequest $request, string $id): JsonResponse
 	{
 		try {
-			$currentCatalog = $this->queryBus->ask(new GetCatalogQuery($id));
+			$currentCatalog = $this->queryBus->dispatch(new GetCatalogQuery($id));
 
 			$command = new UpdateCatalogCommand(
 				id: $id,
@@ -88,9 +100,21 @@ class CatalogController
 					: $currentCatalog->estado
 			);
 
-			$this->commandBus->dispatch($command);
+			$result = $this->commandBus->dispatch($command);
 
-			return new JsonResponse(['message' => 'Catálogo actualizado exitosamente']);
+			if (!$result->isSuccess()) {
+				return new JsonResponse(
+					['error' => $result->getMessage()],
+					Response::HTTP_BAD_REQUEST
+				);
+			}
+
+			$catalog = $this->queryBus->dispatch(new GetCatalogQuery($id));
+
+			return new JsonResponse(
+				['message' => 'Catálogo actualizado exitosamente', 'data' => $catalog],
+				Response::HTTP_OK
+			);
 		} catch (CatalogException $e) {
 			return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_NOT_FOUND);
 		} catch (\Exception $e) {

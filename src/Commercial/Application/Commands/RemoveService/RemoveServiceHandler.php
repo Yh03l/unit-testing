@@ -6,31 +6,29 @@ namespace Commercial\Application\Commands\RemoveService;
 
 use Commercial\Domain\Repositories\CatalogRepository;
 use Commercial\Domain\Exceptions\CatalogException;
+use Commercial\Application\Commands\CommandResult;
 
 class RemoveServiceHandler
 {
-    private CatalogRepository $repository;
+	public function __construct(private readonly CatalogRepository $repository) {}
 
-    public function __construct(CatalogRepository $repository)
-    {
-        $this->repository = $repository;
-    }
+	public function __invoke(RemoveServiceCommand $command): CommandResult
+	{
+		$catalog = $this->repository->findById($command->getCatalogId());
 
-    public function __invoke(RemoveServiceCommand $command): void
-    {
-        $catalog = $this->repository->findById($command->getCatalogId());
-        
-        if (!$catalog) {
-            throw CatalogException::notFound($command->getCatalogId());
-        }
+		if (!$catalog) {
+			throw CatalogException::notFound($command->getCatalogId());
+		}
 
-        $catalog->removeService($command->getServiceId());
-        
-        $this->repository->save($catalog);
-    }
+		$catalog->removeService($command->getServiceId());
 
-    public function handle(RemoveServiceCommand $command): void
-    {
-        $this->__invoke($command);
-    }
-} 
+		$this->repository->save($catalog);
+
+		return CommandResult::success($command->getServiceId(), 'Servicio eliminado exitosamente');
+	}
+
+	public function handle(RemoveServiceCommand $command): CommandResult
+	{
+		return $this->__invoke($command);
+	}
+}

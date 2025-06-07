@@ -1,0 +1,235 @@
+{
+    "vhosts": [
+        {
+            "name": "/"
+        }
+    ],
+    "users": [
+        {
+            "name": "admin",
+            "password": "admin",
+            "tags": "administrator"
+        },
+        {
+            "name": "cateringUser",
+            "password": "cateringPassword",
+            "tags": "administrator"
+        },
+        {
+            "name": "comercialUser",
+            "password": "comercialPassword",
+            "tags": "administrator"
+        },
+        {
+            "name": "logisticaUser",
+            "password": "logisticaPassword",
+            "tags": "administrator"
+        },
+        {
+            "name": "nutricionUser",
+            "password": "nutricionPassword",
+            "tags": "administrator"
+        }
+    ],
+    "permissions": [
+        {
+            "user": "admin",
+            "vhost": "/",
+            "configure": ".*",
+            "write": ".*",
+            "read": ".*"
+        },
+        {
+            "user": "cateringUser",
+            "vhost": "/",
+            "configure": ".*",
+            "write": ".*",
+            "read": ".*"
+        },
+        {
+            "user": "comercialUser",
+            "vhost": "/",
+            "configure": ".*",
+            "write": ".*",
+            "read": ".*"
+        },
+        {
+            "user": "nutricionUser",
+            "vhost": "/",
+            "configure": ".*",
+            "write": ".*",
+            "read": ".*"
+        },
+        {
+            "user": "cateringUser",
+            "vhost": "/",
+            "configure": ".*",
+            "write": ".*",
+            "read": ".*"
+        }
+    ],
+    "parameters": [],
+    "exchanges": [
+        {
+            "name": "cliente-creado",
+            "vhost": "/",
+            "type": "fanout",
+            "durable": true,
+            "auto_delete": false
+        },
+        {
+            "name": "evaluacion-nutricional-contratado",
+            "vhost": "/",
+            "type": "fanout",
+            "durable": true,
+            "auto_delete": false
+        },
+        {
+            "name": "plan-alimentario-creado",
+            "vhost": "/",
+            "type": "fanout",
+            "durable": true,
+            "auto_delete": false
+        },
+        {
+            "name": "plan-alimentario-asignado",
+            "vhost": "/",
+            "type": "fanout",
+            "durable": true,
+            "auto_delete": false
+        },
+        {
+            "name": "catering-contratado",
+            "vhost": "/",
+            "type": "fanout",
+            "durable": true,
+            "auto_delete": false
+        },
+        {
+            "name": "orden-trabajo-finalizado",
+            "vhost": "/",
+            "type": "fanout",
+            "durable": true,
+            "auto_delete": false
+        },
+        {
+            "name": "entrega-cancelada",
+            "vhost": "/",
+            "type": "fanout",
+            "durable": true,
+            "auto_delete": false
+        }
+    ],
+    "queues": [
+        {
+            "name": "catering.cliente-creado",
+            "vhost": "/",
+            "durable": true
+        },
+        {
+            "name": "logistica.cliente-creado",
+            "vhost": "/",
+            "durable": true
+        },
+        {
+            "name": "nutricion.cliente-creado",
+            "vhost": "/",
+            "durable": true
+        },
+        {
+            "name": "nutricion.evaluacion-nutricional-contratado",
+            "vhost": "/",
+            "durable": true
+        },
+        {
+            "name": "catering.plan-alimentario-creado",
+            "vhost": "/",
+            "durable": true
+        },
+        {
+            "name": "comercial.plan-alimentario-asignado",
+            "vhost": "/",
+            "durable": true
+        },
+        {
+            "name": "catering.catering-contratado",
+            "vhost": "/",
+            "durable": true
+        },
+        {
+            "name": "logistica.orden-trabajo-finalizado",
+            "vhost": "/",
+            "durable": true
+        },
+        {
+            "name": "catering.entrega-cancelada",
+            "vhost": "/",
+            "durable": true
+        }
+    ],
+    "bindings": [
+        {
+            "source": "cliente-creado",
+            "vhost": "/",
+            "destination": "catering.cliente-creado",
+            "destination_type": "queue",
+            "routing_key": ""
+        },
+        {
+            "source": "cliente-creado",
+            "vhost": "/",
+            "destination": "logistica.cliente-creado",
+            "destination_type": "queue",
+            "routing_key": ""
+        },
+        {
+            "source": "cliente-creado",
+            "vhost": "/",
+            "destination": "nutricion.cliente-creado",
+            "destination_type": "queue",
+            "routing_key": ""
+        },
+        {
+            "source": "evaluacion-nutricional-contratado",
+            "vhost": "/",
+            "destination": "nutricion.evaluacion-nutricional-contratado",
+            "destination_type": "queue",
+            "routing_key": ""
+        },
+        {
+            "source": "plan-alimentario-creado",
+            "vhost": "/",
+            "destination": "catering.plan-alimentario-creado",
+            "destination_type": "queue",
+            "routing_key": ""
+        },
+        {
+            "source": "plan-alimentario-asignado",
+            "vhost": "/",
+            "destination": "comercial.plan-alimentario-asignado",
+            "destination_type": "queue",
+            "routing_key": ""
+        },
+        {
+            "source": "catering-contratado",
+            "vhost": "/",
+            "destination": "catering.catering-contratado",
+            "destination_type": "queue",
+            "routing_key": ""
+        },
+        {
+            "source": "orden-trabajo-finalizado",
+            "vhost": "/",
+            "destination": "logistica.orden-trabajo-finalizado",
+            "destination_type": "queue",
+            "routing_key": ""
+        },
+        {
+            "source": "entrega-cancelada",
+            "vhost": "/",
+            "destination": "catering.entrega-cancelada",
+            "destination_type": "queue",
+            "routing_key": ""
+        }
+    ]
+}

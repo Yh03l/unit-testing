@@ -4,50 +4,38 @@ declare(strict_types=1);
 
 namespace Commercial\Api\Requests;
 
-use Illuminate\Http\Request;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
-class CreateUserRequest extends Request
+class CreateUserRequest extends FormRequest
 {
-    private string $nombre;
-    private string $apellido;
-    private string $email;
-    private string $tipoUsuarioId;
+	public function authorize(): bool
+	{
+		return true;
+	}
 
-    public function rules(): array
-    {
-        return [
-            'nombre' => 'required|string|max:100',
-            'apellido' => 'required|string|max:100',
-            'email' => 'required|email|max:255',
-            'tipo_usuario_id' => 'required|uuid'
-        ];
-    }
+	public function rules(): array
+	{
+		return [
+			'nombre' => 'required|string|max:100',
+			'apellido' => 'required|string|max:100',
+			'email' => 'required|email|max:255',
+			'tipo_usuario_id' => 'required|uuid',
+		];
+	}
 
-    public function getNombre(): string
-    {
-        return $this->nombre;
-    }
-
-    public function getApellido(): string
-    {
-        return $this->apellido;
-    }
-
-    public function getEmail(): string
-    {
-        return $this->email;
-    }
-
-    public function getTipoUsuarioId(): string
-    {
-        return $this->tipoUsuarioId;
-    }
-
-    protected function prepareForValidation(): void
-    {
-        $this->nombre = $this->input('nombre');
-        $this->apellido = $this->input('apellido');
-        $this->email = $this->input('email');
-        $this->tipoUsuarioId = $this->input('tipo_usuario_id');
-    }
-} 
+	protected function failedValidation(Validator $validator)
+	{
+		throw new HttpResponseException(
+			response()->json(
+				[
+					'success' => false,
+					'message' => 'Validation failed',
+					'errors' => $validator->errors(),
+				],
+				422
+			)
+		);
+	}
+}

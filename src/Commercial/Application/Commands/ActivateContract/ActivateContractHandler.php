@@ -6,24 +6,16 @@ namespace Commercial\Application\Commands\ActivateContract;
 
 use Commercial\Domain\Repositories\ContractRepository;
 use Commercial\Infrastructure\EventBus\EventBus;
+use Commercial\Application\Commands\CommandResult;
 
 class ActivateContractHandler
 {
-	private ContractRepository $repository;
-	private EventBus $eventBus;
+	public function __construct(
+		private readonly ContractRepository $repository,
+		private readonly EventBus $eventBus
+	) {}
 
-	public function __construct(ContractRepository $repository, EventBus $eventBus)
-	{
-		$this->repository = $repository;
-		$this->eventBus = $eventBus;
-	}
-
-	public function __invoke(ActivateContractCommand $command): void
-	{
-		$this->handle($command);
-	}
-
-	public function handle(ActivateContractCommand $command): void
+	public function __invoke(ActivateContractCommand $command): CommandResult
 	{
 		$contract = $this->repository->findById($command->getContractId());
 		if ($contract === null) {
@@ -38,5 +30,12 @@ class ActivateContractHandler
 			$this->eventBus->publish($event);
 		}
 		$contract->clearEvents();
+
+		return CommandResult::success($command->getContractId(), 'Contrato activado exitosamente');
+	}
+
+	public function handle(ActivateContractCommand $command): CommandResult
+	{
+		return $this->__invoke($command);
 	}
 }
