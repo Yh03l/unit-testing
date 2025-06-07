@@ -63,7 +63,7 @@ abstract class User
 
 	abstract public function getTipoUsuario(): string;
 
-	protected function addEvent(DomainEvent $event): void
+	public function addEvent(DomainEvent $event): void
 	{
 		$this->events[] = $event;
 	}

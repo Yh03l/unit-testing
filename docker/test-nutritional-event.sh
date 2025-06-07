@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Publicar mensaje de prueba
-docker exec commercial-rabbitmq rabbitmqadmin \
+docker exec commercial-message-broker rabbitmqadmin \
   --username=commercial \
   --password=commercial123 \
   publish \

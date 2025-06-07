@@ -149,6 +149,7 @@ return [
 		/*
 		 * Package Service Providers...
 		 */
+		Commercial\Infrastructure\Providers\CommercialServiceProvider::class,
 
 		/*
 		 * Application Service Providers...
@@ -157,7 +158,6 @@ return [
 		/* App\Providers\AuthServiceProvider::class,
 		App\Providers\EventServiceProvider::class,
 		App\Providers\RouteServiceProvider::class, */
-		Commercial\Infrastructure\Providers\CommercialServiceProvider::class,
 		Commercial\Infrastructure\Providers\PlanAlimentarioServiceProvider::class,
 	],
 

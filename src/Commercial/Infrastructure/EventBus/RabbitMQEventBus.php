@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Commercial\Infrastructure\EventBus;
 
+use Commercial\Domain\Events\DomainEvent;
 use Commercial\Domain\Repositories\OutboxRepository;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
@@ -13,22 +14,24 @@ class RabbitMQEventBus implements EventBus
 {
 	private AMQPStreamConnection $connection;
 	private OutboxRepository $outboxRepository;
-	private string $exchange;
 
 	public function __construct(
 		AMQPStreamConnection $connection,
-		OutboxRepository $outboxRepository,
-		string $exchange = 'commercial.events'
+		OutboxRepository $outboxRepository
 	) {
 		$this->connection = $connection;
 		$this->outboxRepository = $outboxRepository;
-		$this->exchange = $exchange;
 	}
 
 	public function publish(object $event): void
 	{
+		if (!$event instanceof DomainEvent) {
+			throw new \InvalidArgumentException('El evento debe implementar DomainEvent');
+		}
+
 		$eventType = get_class($event);
 		$eventData = $this->serializeEvent($event);
+		$eventData['exchange'] = $event->getExchangeName(); // Guardamos el exchange en los datos
 
 		// Guardar en outbox
 		$this->outboxRepository->save($eventType, $eventData);
@@ -37,12 +40,18 @@ class RabbitMQEventBus implements EventBus
 	public function publishPendingEvents(): void
 	{
 		$channel = $this->connection->channel();
-		$channel->exchange_declare($this->exchange, 'topic', false, true, false);
-
 		$pendingEvents = $this->outboxRepository->findPendingEvents();
 
 		foreach ($pendingEvents as $event) {
 			try {
+				$exchange =
+					$event['event_data']['exchange'] ??
+					throw new \RuntimeException('Exchange no definido en el evento');
+				unset($event['event_data']['exchange']); // Removemos el exchange de los datos antes de publicar
+
+				// Declaramos el exchange para cada evento
+				$channel->exchange_declare($exchange, 'fanout', false, true, false);
+
 				$message = new AMQPMessage(json_encode($event['event_data']), [
 					'content_type' => 'application/json',
 					'delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT,
@@ -50,12 +59,14 @@ class RabbitMQEventBus implements EventBus
 					'type' => $event['event_type'],
 				]);
 
-				$routingKey = $this->getRoutingKey($event['event_type']);
-				$channel->basic_publish($message, $this->exchange, $routingKey);
+				// En fanout el routing key se ignora, así que usamos string vacío
+				$channel->basic_publish($message, $exchange, '');
 
 				$this->outboxRepository->markAsPublished($event['id']);
-				Log::info("Evento publicado exitosamente en routing key: $routingKey", [
+				Log::info('Evento publicado exitosamente', [
 					'event_id' => $event['id'],
+					'event_type' => $event['event_type'],
+					'exchange' => $exchange,
 				]);
 			} catch (\Exception $e) {
 				Log::error('Error al publicar evento', [
@@ -92,23 +103,6 @@ class RabbitMQEventBus implements EventBus
 		}
 
 		return $data;
-	}
-
-	private function getRoutingKey(string $eventType): string
-	{
-		$parts = explode('\\', $eventType);
-		$parts = array_map(fn($part) => str_replace('_', '.', $part), $parts);
-
-		// Separar camel case en el último segmento (el nombre del evento)
-		$last = array_pop($parts);
-		// Convierte ContractCreated en contract.created
-		$last = preg_replace('/(?<!^)([A-Z])/', '.$1', $last);
-		$parts[] = $last;
-
-		// Ahora sí, convierte todo a minúsculas
-		$parts = array_map('strtolower', $parts);
-
-		return implode('.', $parts);
 	}
 
 	public function __destruct()

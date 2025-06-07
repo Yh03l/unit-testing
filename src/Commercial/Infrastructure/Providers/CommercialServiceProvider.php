@@ -10,10 +10,12 @@ use Commercial\Domain\Repositories\CatalogRepository;
 use Commercial\Domain\Repositories\ServiceRepository;
 use Commercial\Domain\Repositories\ContractRepository;
 use Commercial\Domain\Repositories\OutboxRepository;
+use Commercial\Domain\Repositories\UserRepository;
 use Commercial\Infrastructure\Persistence\Eloquent\EloquentCatalogRepository;
 use Commercial\Infrastructure\Persistence\Eloquent\EloquentServiceRepository;
 use Commercial\Infrastructure\Persistence\Eloquent\EloquentContractRepository;
 use Commercial\Infrastructure\Persistence\Eloquent\EloquentOutboxRepository;
+use Commercial\Infrastructure\Persistence\Eloquent\EloquentUserRepository;
 use Commercial\Infrastructure\Bus\CommandBus;
 use Commercial\Infrastructure\Bus\QueryBus;
 use Commercial\Infrastructure\Bus\LaravelCommandBus;
@@ -36,6 +38,8 @@ class CommercialServiceProvider extends ServiceProvider
 		$this->app->bind(ContractRepository::class, EloquentContractRepository::class);
 
 		$this->app->bind(OutboxRepository::class, EloquentOutboxRepository::class);
+
+		$this->app->bind(UserRepository::class, EloquentUserRepository::class);
 
 		// Registrar buses
 		$this->app->bind(LaravelCommandBus::class, function ($app) {

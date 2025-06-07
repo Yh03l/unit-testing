@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Commercial\Api\Controllers\ContractController;
 use Commercial\Api\Controllers\UserController;
 use Commercial\Api\Controllers\CatalogController;
+use Commercial\Api\Controllers\PatientController;
 use Commercial\Api\Controllers\ServiceController;
 
 Route::prefix('commercial')->group(function () {
@@ -42,5 +43,10 @@ Route::prefix('commercial')->group(function () {
 		Route::put('/{id}/status', [ServiceController::class, 'updateStatus']);
 		Route::post('/{id}/costs', [ServiceController::class, 'updateCost']);
 		Route::get('/{id}/costs/history', [ServiceController::class, 'getCostHistory']);
+	});
+
+	// Rutas para Pacientes
+	Route::prefix('patients')->group(function () {
+		Route::post('/', [PatientController::class, 'create']);
 	});
 });
