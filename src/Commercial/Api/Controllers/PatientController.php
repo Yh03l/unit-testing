@@ -6,6 +6,8 @@ namespace Commercial\Api\Controllers;
 
 use Commercial\Application\Commands\CreatePatient\CreatePatientCommand;
 use Commercial\Application\Queries\GetPatientByEmail\GetPatientByEmailQuery;
+use Commercial\Application\Queries\GetPatientById\GetPatientByIdQuery;
+use Commercial\Application\Queries\ListPatients\ListPatientsQuery;
 use Commercial\Api\Requests\CreatePatientRequest;
 use Commercial\Infrastructure\Bus\CommandBus;
 use Commercial\Infrastructure\Bus\QueryBus;
@@ -59,6 +61,44 @@ class PatientController extends Controller
 		} catch (\Exception $e) {
 			return new JsonResponse(
 				['error' => 'Error interno al crear el paciente: ' . $e->getMessage()],
+				Response::HTTP_INTERNAL_SERVER_ERROR
+			);
+		}
+	}
+
+	public function get(string $id): JsonResponse
+	{
+		try {
+			$patient = $this->queryBus->dispatch(new GetPatientByIdQuery($id));
+
+			if (!$patient) {
+				return new JsonResponse(
+					['error' => 'Paciente no encontrado'],
+					Response::HTTP_NOT_FOUND
+				);
+			}
+
+			return new JsonResponse(['data' => $patient]);
+		} catch (\Exception $e) {
+			return new JsonResponse(
+				['error' => 'Error interno al obtener el paciente: ' . $e->getMessage()],
+				Response::HTTP_INTERNAL_SERVER_ERROR
+			);
+		}
+	}
+
+	public function list(): JsonResponse
+	{
+		try {
+			$limit = request()->get('limit') ? (int) request()->get('limit') : null;
+			$offset = request()->get('offset') ? (int) request()->get('offset') : null;
+
+			$patients = $this->queryBus->dispatch(new ListPatientsQuery($limit, $offset));
+
+			return new JsonResponse(['data' => $patients]);
+		} catch (\Exception $e) {
+			return new JsonResponse(
+				['error' => 'Error interno al listar los pacientes: ' . $e->getMessage()],
 				Response::HTTP_INTERNAL_SERVER_ERROR
 			);
 		}

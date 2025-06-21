@@ -13,5 +13,6 @@ interface UserRepository
 	public function findByEmail(Email $email): ?User;
 	public function findById(string $id): ?User;
 	public function findAll(): array;
+	public function findAllPatients(?int $limit = null, ?int $offset = null): array;
 	public function delete(string $id): void;
 }

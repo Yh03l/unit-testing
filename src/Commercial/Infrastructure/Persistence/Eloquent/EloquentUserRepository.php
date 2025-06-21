@@ -87,6 +87,21 @@ class EloquentUserRepository implements UserRepository
 		return $this->model->all()->map(fn($model) => $this->toDomain($model))->all();
 	}
 
+	public function findAllPatients(?int $limit = null, ?int $offset = null): array
+	{
+		$query = UserModel::with('patient')->where('tipo_usuario', 'paciente');
+
+		if ($limit !== null) {
+			$query->limit($limit);
+		}
+
+		if ($offset !== null) {
+			$query->offset($offset);
+		}
+
+		return $query->get()->map(fn($model) => $this->toDomain($model))->all();
+	}
+
 	private function toDomain(UserModel $model): User
 	{
 		if ($model->tipo_usuario === 'paciente' && $model->patient) {

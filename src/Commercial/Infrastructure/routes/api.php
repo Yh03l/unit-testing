@@ -48,5 +48,7 @@ Route::prefix('commercial')->group(function () {
 	// Rutas para Pacientes
 	Route::prefix('patients')->group(function () {
 		Route::post('/', [PatientController::class, 'create']);
+		Route::get('/', [PatientController::class, 'list']);
+		Route::get('/{id}', [PatientController::class, 'get']);
 	});
 });
