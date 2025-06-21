@@ -23,6 +23,7 @@ use Commercial\Infrastructure\Bus\LaravelQueryBus;
 use Commercial\Infrastructure\EventBus\EventBus;
 use Commercial\Infrastructure\EventBus\RabbitMQEventBus;
 use Commercial\Infrastructure\Console\Commands\PublishOutboxEvents;
+use Commercial\Infrastructure\Console\Commands\CheckRabbitMQConnection;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use Commercial\Infrastructure\EventBus\InMemoryEventBus;
 
@@ -65,21 +66,22 @@ class CommercialServiceProvider extends ServiceProvider
 			}
 
 			try {
+				$config = config('rabbitmq');
 				$connection = new AMQPStreamConnection(
-					env('RABBITMQ_HOST', 'localhost'),
-					(int) env('RABBITMQ_PORT', 5672),
-					env('RABBITMQ_USER', 'guest'),
-					env('RABBITMQ_PASSWORD', 'guest'),
-					env('RABBITMQ_VHOST', '/'),
+					$config['host'],
+					$config['port'],
+					$config['user'],
+					$config['password'],
+					$config['vhost'],
 					false, // lazy connection
 					'AMQPLAIN',
 					null,
 					'en_US',
-					3.0, // connection timeout
-					3.0, // read timeout
-					null, // write timeout
-					false, // keepalive
-					0 // heartbeat
+					$config['connection_timeout'],
+					$config['read_timeout'],
+					$config['write_timeout'],
+					$config['keepalive'],
+					$config['heartbeat']
 				);
 				Log::info('RabbitMQ connection established successfully');
 				return $connection;
@@ -96,20 +98,25 @@ class CommercialServiceProvider extends ServiceProvider
 				return $eventBus;
 			}
 
+			// En testing siempre usar InMemoryEventBus
 			if ($app->environment('testing')) {
 				$eventBus = new InMemoryEventBus();
+				Log::info('Using InMemoryEventBus for testing environment');
 				return $eventBus;
 			}
 
+			// Intentar usar RabbitMQ si está disponible
 			try {
 				$connection = $app->make(AMQPStreamConnection::class);
-				if ($connection !== null) {
+				if ($connection !== null && $connection->isConnected()) {
 					$eventBus = new RabbitMQEventBus(
 						$connection,
 						$app->make(OutboxRepository::class)
 					);
 					Log::info('Using RabbitMQEventBus for event publishing');
 					return $eventBus;
+				} else {
+					Log::warning('RabbitMQ connection is null or not connected');
 				}
 			} catch (\Exception $e) {
 				Log::warning('Failed to initialize RabbitMQEventBus: ' . $e->getMessage());
@@ -129,7 +136,7 @@ class CommercialServiceProvider extends ServiceProvider
 
 		// Registrar comandos
 		if ($this->app->runningInConsole()) {
-			$this->commands([PublishOutboxEvents::class]);
+			$this->commands([PublishOutboxEvents::class, CheckRabbitMQConnection::class]);
 
 			$this->publishes(
 				[

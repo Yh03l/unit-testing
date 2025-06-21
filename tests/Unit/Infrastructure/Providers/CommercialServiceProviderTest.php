@@ -20,185 +20,222 @@ use PHPUnit\Framework\TestCase;
 
 class CommercialServiceProviderTest extends TestCase
 {
-    private Application $app;
-    private CommercialServiceProvider $provider;
+	private Application $app;
+	private CommercialServiceProvider $provider;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        
-        $this->app = $this->createMock(Application::class);
-        $this->provider = new CommercialServiceProvider($this->app);
-    }
+	protected function setUp(): void
+	{
+		parent::setUp();
 
-    public function test_register_binds_repositories_in_correct_order(): void
-    {
-        // Arrange
-        $bindOrder = [];
-        $this->app->method('bind')
-            ->willReturnCallback(function($abstract, $concrete) use (&$bindOrder) {
-                $bindOrder[] = $abstract;
-            });
+		$this->app = $this->createMock(Application::class);
+		$this->provider = new CommercialServiceProvider($this->app);
+	}
 
-        // Act
-        $this->provider->register();
+	public function test_register_binds_repositories_in_correct_order(): void
+	{
+		// Arrange
+		$bindOrder = [];
+		$this->app
+			->method('bind')
+			->willReturnCallback(function ($abstract, $concrete) use (&$bindOrder) {
+				$bindOrder[] = $abstract;
+			});
 
-        // Assert
-        $expectedOrder = [
-            CatalogRepository::class,
-            ServiceRepository::class,
-            LaravelCommandBus::class,
-            LaravelQueryBus::class,
-            CommandBus::class,
-            QueryBus::class
-        ];
+		// Act
+		$this->provider->register();
 
-        foreach ($expectedOrder as $index => $expected) {
-            $this->assertEquals($expected, $bindOrder[$index], "Binding at position $index should be $expected");
-        }
-    }
+		// Assert
+		$expectedOrder = [
+			CatalogRepository::class,
+			ServiceRepository::class,
+			LaravelCommandBus::class,
+			LaravelQueryBus::class,
+			CommandBus::class,
+			QueryBus::class,
+		];
 
-    public function test_register_creates_command_bus_correctly(): void
-    {
-        // Arrange
-        $actualBindings = [];
-        $this->app->method('bind')
-            ->willReturnCallback(function($abstract, $concrete) use (&$actualBindings) {
-                $actualBindings[$abstract] = $concrete;
-            });
+		foreach ($expectedOrder as $index => $expected) {
+			$this->assertEquals(
+				$expected,
+				$bindOrder[$index],
+				"Binding at position $index should be $expected"
+			);
+		}
+	}
 
-        // Act
-        $this->provider->register();
+	public function test_register_creates_command_bus_correctly(): void
+	{
+		// Arrange
+		$actualBindings = [];
+		$this->app
+			->method('bind')
+			->willReturnCallback(function ($abstract, $concrete) use (&$actualBindings) {
+				$actualBindings[$abstract] = $concrete;
+			});
 
-        // Assert
-        $commandBusClosure = $actualBindings[LaravelCommandBus::class];
-        $this->assertTrue(is_callable($commandBusClosure));
+		// Act
+		$this->provider->register();
 
-        // Verify the closure creates a LaravelCommandBus
-        $mockApp = $this->createMock(Application::class);
-        $result = $commandBusClosure($mockApp);
-        $this->assertInstanceOf(LaravelCommandBus::class, $result);
-    }
+		// Assert
+		$commandBusClosure = $actualBindings[LaravelCommandBus::class];
+		$this->assertTrue(is_callable($commandBusClosure));
 
-    public function test_register_creates_query_bus_correctly(): void
-    {
-        // Arrange
-        $actualBindings = [];
-        $this->app->method('bind')
-            ->willReturnCallback(function($abstract, $concrete) use (&$actualBindings) {
-                $actualBindings[$abstract] = $concrete;
-            });
+		// Verify the closure creates a LaravelCommandBus
+		$mockApp = $this->createMock(Application::class);
+		$result = $commandBusClosure($mockApp);
+		$this->assertInstanceOf(LaravelCommandBus::class, $result);
+	}
 
-        // Act
-        $this->provider->register();
+	public function test_register_creates_query_bus_correctly(): void
+	{
+		// Arrange
+		$actualBindings = [];
+		$this->app
+			->method('bind')
+			->willReturnCallback(function ($abstract, $concrete) use (&$actualBindings) {
+				$actualBindings[$abstract] = $concrete;
+			});
 
-        // Assert
-        $queryBusClosure = $actualBindings[LaravelQueryBus::class];
-        $this->assertTrue(is_callable($queryBusClosure));
+		// Act
+		$this->provider->register();
 
-        // Verify the closure creates a LaravelQueryBus
-        $mockApp = $this->createMock(Application::class);
-        $result = $queryBusClosure($mockApp);
-        $this->assertInstanceOf(LaravelQueryBus::class, $result);
-    }
+		// Assert
+		$queryBusClosure = $actualBindings[LaravelQueryBus::class];
+		$this->assertTrue(is_callable($queryBusClosure));
 
-    public function test_register_binds_event_bus_as_singleton(): void
-    {
-        // Arrange
-        $this->app->expects($this->once())
-            ->method('singleton')
-            ->with(
-                $this->equalTo(EventBus::class),
-                $this->equalTo(InMemoryEventBus::class)
-            );
+		// Verify the closure creates a LaravelQueryBus
+		$mockApp = $this->createMock(Application::class);
+		$result = $queryBusClosure($mockApp);
+		$this->assertInstanceOf(LaravelQueryBus::class, $result);
+	}
 
-        // Act
-        $this->provider->register();
-    }
+	public function test_register_creates_event_bus_with_fallback(): void
+	{
+		// Arrange
+		$actualBindings = [];
+		$this->app
+			->method('bind')
+			->willReturnCallback(function ($abstract, $concrete) use (&$actualBindings) {
+				$actualBindings[$abstract] = $concrete;
+			});
 
-    public function test_boot_loads_migrations_with_correct_path(): void
-    {
-        // Arrange
-        $this->app->expects($this->once())
-            ->method('runningInConsole')
-            ->willReturn(false);
+		$this->app
+			->method('singleton')
+			->willReturnCallback(function ($abstract, $concrete) use (&$actualBindings) {
+				$actualBindings[$abstract] = $concrete;
+			});
 
-        // Mock the trait method loadMigrationsFrom
-        $provider = $this->getMockBuilder(CommercialServiceProvider::class)
-            ->setConstructorArgs([$this->app])
-            ->onlyMethods(['loadMigrationsFrom'])
-            ->getMock();
+		$this->app->method('environment')->with('testing')->andReturn(false);
 
-        $provider->expects($this->once())
-            ->method('loadMigrationsFrom')
-            ->with($this->callback(function ($paths) {
-                return is_array($paths) && 
-                       str_contains($paths[0], 'Persistence/Migrations');
-            }));
+		$this->app->method('make')->willReturn(null); // Simular que RabbitMQ no está disponible
 
-        // Act
-        $provider->boot();
-    }
+		// Act
+		$this->provider->register();
 
-    public function test_boot_does_not_publish_migrations_when_not_in_console(): void
-    {
-        // Arrange
-        $this->app->expects($this->once())
-            ->method('runningInConsole')
-            ->willReturn(false);
+		// Assert
+		$this->assertArrayHasKey(EventBus::class, $actualBindings);
+		$eventBusClosure = $actualBindings[EventBus::class];
+		$this->assertTrue(is_callable($eventBusClosure));
 
-        // Mock the trait method publishes
-        $provider = $this->getMockBuilder(CommercialServiceProvider::class)
-            ->setConstructorArgs([$this->app])
-            ->onlyMethods(['publishes'])
-            ->getMock();
+		// Verify the closure creates an InMemoryEventBus when RabbitMQ is not available
+		$mockApp = $this->createMock(Application::class);
+		$mockApp->method('environment')->with('testing')->andReturn(false);
+		$mockApp->method('make')->willReturn(null);
 
-        $provider->expects($this->never())
-            ->method('publishes');
+		$result = $eventBusClosure($mockApp);
+		$this->assertInstanceOf(InMemoryEventBus::class, $result);
+	}
 
-        // Act
-        $provider->boot();
-    }
+	public function test_register_binds_event_bus_as_singleton(): void
+	{
+		// Arrange
+		$this->app
+			->expects($this->once())
+			->method('singleton')
+			->with($this->equalTo(EventBus::class), $this->equalTo(InMemoryEventBus::class));
 
-    public function test_boot_publishes_migrations_when_running_in_console(): void
-    {
-        // Arrange
-        $this->app->expects($this->once())
-            ->method('runningInConsole')
-            ->willReturn(true);
+		// Act
+		$this->provider->register();
+	}
 
-        // Mock the trait method publishes and database_path
-        $provider = $this->getMockBuilder(CommercialServiceProvider::class)
-            ->setConstructorArgs([$this->app])
-            ->onlyMethods(['publishes', 'getDatabasePath'])
-            ->getMock();
+	public function test_boot_loads_migrations_with_correct_path(): void
+	{
+		// Arrange
+		$this->app->expects($this->once())->method('runningInConsole')->willReturn(false);
 
-        $provider->method('getDatabasePath')
-            ->willReturn('/database/migrations');
+		// Mock the trait method loadMigrationsFrom
+		$provider = $this->getMockBuilder(CommercialServiceProvider::class)
+			->setConstructorArgs([$this->app])
+			->onlyMethods(['loadMigrationsFrom'])
+			->getMock();
 
-        $provider->expects($this->once())
-            ->method('publishes')
-            ->with(
-                $this->callback(function ($paths) {
-                    return is_array($paths) && 
-                           count($paths) === 1 &&
-                           str_contains(key($paths), 'Persistence/Migrations') &&
-                           str_contains(current($paths), '/database/migrations');
-                }),
-                'commercial-migrations'
-            );
+		$provider
+			->expects($this->once())
+			->method('loadMigrationsFrom')
+			->with(
+				$this->callback(function ($paths) {
+					return is_array($paths) && str_contains($paths[0], 'Persistence/Migrations');
+				})
+			);
 
-        // Act
-        $provider->boot();
-    }
+		// Act
+		$provider->boot();
+	}
 
-    private function findBinding(array $bindings, string $abstract): ?array
-    {
-        foreach ($bindings as $binding) {
-            if ($binding[0] === $abstract) {
-                return $binding;
-            }
-        }
-        return null;
-    }
-} 
+	public function test_boot_does_not_publish_migrations_when_not_in_console(): void
+	{
+		// Arrange
+		$this->app->expects($this->once())->method('runningInConsole')->willReturn(false);
+
+		// Mock the trait method publishes
+		$provider = $this->getMockBuilder(CommercialServiceProvider::class)
+			->setConstructorArgs([$this->app])
+			->onlyMethods(['publishes'])
+			->getMock();
+
+		$provider->expects($this->never())->method('publishes');
+
+		// Act
+		$provider->boot();
+	}
+
+	public function test_boot_publishes_migrations_when_running_in_console(): void
+	{
+		// Arrange
+		$this->app->expects($this->once())->method('runningInConsole')->willReturn(true);
+
+		// Mock the trait method publishes and database_path
+		$provider = $this->getMockBuilder(CommercialServiceProvider::class)
+			->setConstructorArgs([$this->app])
+			->onlyMethods(['publishes', 'getDatabasePath'])
+			->getMock();
+
+		$provider->method('getDatabasePath')->willReturn('/database/migrations');
+
+		$provider
+			->expects($this->once())
+			->method('publishes')
+			->with(
+				$this->callback(function ($paths) {
+					return is_array($paths) &&
+						count($paths) === 1 &&
+						str_contains(key($paths), 'Persistence/Migrations') &&
+						str_contains(current($paths), '/database/migrations');
+				}),
+				'commercial-migrations'
+			);
+
+		// Act
+		$provider->boot();
+	}
+
+	private function findBinding(array $bindings, string $abstract): ?array
+	{
+		foreach ($bindings as $binding) {
+			if ($binding[0] === $abstract) {
+				return $binding;
+			}
+		}
+		return null;
+	}
+}

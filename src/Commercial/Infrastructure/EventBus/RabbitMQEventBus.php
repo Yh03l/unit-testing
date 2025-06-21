@@ -19,6 +19,10 @@ class RabbitMQEventBus implements EventBus
 		AMQPStreamConnection $connection,
 		OutboxRepository $outboxRepository
 	) {
+		if ($connection === null) {
+			throw new \InvalidArgumentException('La conexión AMQP no puede ser null');
+		}
+
 		$this->connection = $connection;
 		$this->outboxRepository = $outboxRepository;
 	}
@@ -39,51 +43,60 @@ class RabbitMQEventBus implements EventBus
 
 	public function publishPendingEvents(): void
 	{
-		$channel = $this->connection->channel();
-		$pendingEvents = $this->outboxRepository->findPendingEvents();
+		try {
+			if (!$this->connection->isConnected()) {
+				Log::warning('RabbitMQ connection is not available, skipping event publishing');
+				return;
+			}
 
-		foreach ($pendingEvents as $event) {
-			try {
-				$exchange =
-					$event['event_data']['exchange'] ??
-					throw new \RuntimeException('Exchange no definido en el evento');
-				unset($event['event_data']['exchange']); // Removemos el exchange de los datos antes de publicar
+			$channel = $this->connection->channel();
+			$pendingEvents = $this->outboxRepository->findPendingEvents();
 
-				// Declaramos el exchange para cada evento
-				$channel->exchange_declare($exchange, 'fanout', false, true, false);
+			foreach ($pendingEvents as $event) {
+				try {
+					$exchange =
+						$event['event_data']['exchange'] ??
+						throw new \RuntimeException('Exchange no definido en el evento');
+					unset($event['event_data']['exchange']); // Removemos el exchange de los datos antes de publicar
 
-				$message = new AMQPMessage(json_encode($event['event_data']), [
-					'content_type' => 'application/json',
-					'delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT,
-					'message_id' => $event['id'],
-					'type' => $event['event_type'],
-				]);
+					// Declaramos el exchange para cada evento
+					$channel->exchange_declare($exchange, 'fanout', false, true, false);
 
-				// En fanout el routing key se ignora, así que usamos string vacío
-				$channel->basic_publish($message, $exchange, '');
+					$message = new AMQPMessage(json_encode($event['event_data']), [
+						'content_type' => 'application/json',
+						'delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT,
+						'message_id' => $event['id'],
+						'type' => $event['event_type'],
+					]);
 
-				$this->outboxRepository->markAsPublished($event['id']);
-				Log::info('Evento publicado exitosamente', [
-					'event_id' => $event['id'],
-					'event_type' => $event['event_type'],
-					'exchange' => $exchange,
-				]);
-			} catch (\Exception $e) {
-				Log::error('Error al publicar evento', [
-					'event_id' => $event['id'],
-					'error' => $e->getMessage(),
-				]);
+					// En fanout el routing key se ignora, así que usamos string vacío
+					$channel->basic_publish($message, $exchange, '');
 
-				$this->outboxRepository->incrementRetryCount($event['id']);
+					$this->outboxRepository->markAsPublished($event['id']);
+					Log::info('Evento publicado exitosamente', [
+						'event_id' => $event['id'],
+						'event_type' => $event['event_type'],
+						'exchange' => $exchange,
+					]);
+				} catch (\Exception $e) {
+					Log::error('Error al publicar evento', [
+						'event_id' => $event['id'],
+						'error' => $e->getMessage(),
+					]);
 
-				if ($event['retry_count'] >= 2) {
-					// Después de 3 intentos (0,1,2)
-					$this->outboxRepository->markAsFailed($event['id']);
+					$this->outboxRepository->incrementRetryCount($event['id']);
+
+					if ($event['retry_count'] >= 2) {
+						// Después de 3 intentos (0,1,2)
+						$this->outboxRepository->markAsFailed($event['id']);
+					}
 				}
 			}
-		}
 
-		$channel->close();
+			$channel->close();
+		} catch (\Exception $e) {
+			Log::error('Error al publicar eventos pendientes: ' . $e->getMessage());
+		}
 	}
 
 	private function serializeEvent(object $event): array
