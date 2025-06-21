@@ -11,6 +11,7 @@ Route::prefix('commercial')->group(function () {
 	// Rutas de Contratos
 	Route::prefix('contracts')->group(function () {
 		Route::post('/', [ContractController::class, 'create']);
+		Route::get('/', [ContractController::class, 'list']);
 		Route::get('/{id}', [ContractController::class, 'get']);
 		Route::post('/{id}/activate', [ContractController::class, 'activate']);
 		Route::post('/{id}/cancel', [ContractController::class, 'cancel']);

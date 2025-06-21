@@ -9,6 +9,7 @@ use Commercial\Application\Commands\ActivateContract\ActivateContractCommand;
 use Commercial\Application\Commands\CancelContract\CancelContractCommand;
 use Commercial\Application\Queries\GetContract\GetContractQuery;
 use Commercial\Application\Queries\ListContractsByPaciente\ListContractsByPacienteQuery;
+use Commercial\Application\Queries\ListContracts\ListContractsQuery;
 use Commercial\Api\Requests\CreateContractRequest;
 use Commercial\Infrastructure\Bus\CommandBus;
 use Commercial\Infrastructure\Bus\QueryBus;
@@ -117,5 +118,25 @@ class ContractController extends Controller
 		$contracts = $this->queryBus->dispatch(new ListContractsByPacienteQuery($pacienteId));
 
 		return new JsonResponse(['data' => $contracts]);
+	}
+
+	public function list(): JsonResponse
+	{
+		try {
+			$pacienteId = request()->get('paciente_id');
+			$limit = request()->get('limit') ? (int) request()->get('limit') : null;
+			$offset = request()->get('offset') ? (int) request()->get('offset') : null;
+
+			$contracts = $this->queryBus->dispatch(
+				new ListContractsQuery($pacienteId, $limit, $offset)
+			);
+
+			return new JsonResponse(['data' => $contracts]);
+		} catch (\Exception $e) {
+			return new JsonResponse(
+				['error' => 'Error interno al listar los contratos: ' . $e->getMessage()],
+				Response::HTTP_INTERNAL_SERVER_ERROR
+			);
+		}
 	}
 }

@@ -3,14 +3,14 @@
 # Directorio de la aplicación
 APP_DIR="/var/www/html"
 
-# Función para publicar eventos (se ejecuta cada 30 segundos)
+# Función para publicar eventos (se ejecuta cada 5 segundos)
 publish_events() {
     while true; do
         echo "[$(date)] Publicando eventos pendientes..."
         cd $APP_DIR
         php artisan commercial:publish-events
-        echo "[$(date)] Esperando 30 segundos..."
-        sleep 30
+        echo "[$(date)] Esperando 5 segundos..."
+        sleep 5
     done
 }
 
