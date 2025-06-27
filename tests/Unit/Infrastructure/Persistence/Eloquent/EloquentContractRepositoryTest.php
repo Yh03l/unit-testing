@@ -8,240 +8,358 @@ use Commercial\Infrastructure\Persistence\Eloquent\EloquentContractRepository;
 use Commercial\Infrastructure\Persistence\Eloquent\ContractModel;
 use Commercial\Domain\Aggregates\Contract\Contract;
 use Commercial\Domain\ValueObjects\ContractDate;
+use Commercial\Domain\Repositories\ServiceRepository;
 use Tests\Unit\TestHelpers\DateTimeHelper;
 use Mockery;
-use Mockery\Adapter\Phpunit\MockeryTestCase;
+use Tests\TestCase;
 use Illuminate\Database\Eloquent\Collection;
 
-class EloquentContractRepositoryTest extends MockeryTestCase
+class EloquentContractRepositoryTest extends TestCase
 {
-    private EloquentContractRepository $repository;
-    private ContractModel $model;
-    private \DateTimeImmutable $futureDate;
-    private \DateTimeImmutable $furtherFutureDate;
-    private \DateTime $futureDateMutable;
-    private \DateTime $furtherFutureDateMutable;
+	private EloquentContractRepository $repository;
+	private ContractModel $model;
+	private ServiceRepository $serviceRepository;
+	private \DateTimeImmutable $futureDate;
+	private \DateTimeImmutable $furtherFutureDate;
+	private \DateTime $futureDateMutable;
+	private \DateTime $furtherFutureDateMutable;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->model = Mockery::mock(ContractModel::class);
-        $this->repository = new EloquentContractRepository($this->model);
-        
-        // Usar fechas futuras para evitar validaciones
-        $this->futureDate = new \DateTimeImmutable('2025-01-01');
-        $this->furtherFutureDate = new \DateTimeImmutable('2025-12-31');
-        $this->futureDateMutable = \DateTime::createFromImmutable($this->futureDate);
-        $this->furtherFutureDateMutable = \DateTime::createFromImmutable($this->furtherFutureDate);
+	protected function setUp(): void
+	{
+		parent::setUp();
+		$this->model = Mockery::mock(ContractModel::class);
+		$this->serviceRepository = Mockery::mock(ServiceRepository::class);
+		$this->repository = new EloquentContractRepository($this->model, $this->serviceRepository);
 
-        // Mockear la fecha actual para que sea anterior a las fechas de prueba
-        DateTimeHelper::mockNow(new \DateTimeImmutable('2024-01-01'));
-    }
+		// Usar fechas que sean realmente futuras respecto a la fecha actual
+		$now = new \DateTimeImmutable();
+		$this->futureDate = $now->modify('+1 day');
+		$this->furtherFutureDate = $now->modify('+1 year');
+		$this->futureDateMutable = \DateTime::createFromImmutable($this->futureDate);
+		$this->furtherFutureDateMutable = \DateTime::createFromImmutable($this->furtherFutureDate);
 
-    protected function tearDown(): void
-    {
-        parent::tearDown();
-        DateTimeHelper::reset();
-    }
+		// Mockear la fecha actual para que sea anterior a las fechas de prueba
+		DateTimeHelper::mockNow(new \DateTimeImmutable('2024-01-01'));
 
-    public function testSaveCreatesContract(): void
-    {
-        $contract = Contract::create(
-            'test-id',
-            'paciente-123',
-            'servicio-456',
-            new ContractDate(
-                $this->futureDate,
-                $this->furtherFutureDate
-            )
-        );
+		$this->model->shouldReceive('setAttribute')->andReturnSelf();
+		$this->model->shouldReceive('__set')->andReturnNull();
+	}
 
-        $this->model->shouldReceive('updateOrCreate')
-            ->once()
-            ->with(
-                ['id' => $contract->getId()],
-                [
-                    'paciente_id' => $contract->getPacienteId(),
-                    'servicio_id' => $contract->getServicioId(),
-                    'estado' => $contract->getEstado(),
-                    'fecha_inicio' => $contract->getFechaContrato()->getFechaInicio(),
-                    'fecha_fin' => $contract->getFechaContrato()->getFechaFin(),
-                ]
-            );
+	protected function tearDown(): void
+	{
+		parent::tearDown();
+		DateTimeHelper::reset();
+	}
 
-        $this->repository->save($contract);
-    }
+	public function testSaveCreatesContract(): void
+	{
+		$contract = Contract::create(
+			'test-id',
+			'paciente-123',
+			'servicio-456',
+			new ContractDate($this->futureDate, $this->furtherFutureDate),
+			$this->serviceRepository
+		);
 
-    public function testFindByIdReturnsContractWhenExists(): void
-    {
-        $id = 'test-id';
-        $modelMock = Mockery::mock(ContractModel::class);
-        
-        $modelMock->shouldReceive('getAttribute')
-            ->with('id')
-            ->andReturn($id);
-        $modelMock->shouldReceive('getAttribute')
-            ->with('paciente_id')
-            ->andReturn('paciente-123');
-        $modelMock->shouldReceive('getAttribute')
-            ->with('servicio_id')
-            ->andReturn('servicio-456');
-        $modelMock->shouldReceive('getAttribute')
-            ->with('fecha_inicio')
-            ->andReturn($this->futureDateMutable);
-        $modelMock->shouldReceive('getAttribute')
-            ->with('fecha_fin')
-            ->andReturn($this->furtherFutureDateMutable);
+		$mockResult = new class ($contract) extends ContractModel {
+			public $id;
+			private $data;
+			public function __construct($contract)
+			{
+				$this->id = $contract->getId();
+				$this->data = [
+					'id' => $contract->getId(),
+					'paciente_id' => $contract->getPacienteId(),
+					'servicio_id' => $contract->getServicioId(),
+					'plan_alimentario_id' => $contract->getPlanAlimentarioId(),
+					'estado' => $contract->getEstado(),
+					'fecha_inicio' => $contract->getFechaContrato()->getFechaInicio(),
+					'fecha_fin' => $contract->getFechaContrato()->getFechaFin(),
+				];
+			}
+			public function toArray()
+			{
+				return $this->data;
+			}
+		};
 
-        $this->model->shouldReceive('find')
-            ->once()
-            ->with($id)
-            ->andReturn($modelMock);
+		$this->model
+			->shouldReceive('updateOrCreate')
+			->once()
+			->with(
+				['id' => $contract->getId()],
+				[
+					'paciente_id' => $contract->getPacienteId(),
+					'servicio_id' => $contract->getServicioId(),
+					'plan_alimentario_id' => $contract->getPlanAlimentarioId(),
+					'estado' => $contract->getEstado(),
+					'fecha_inicio' => $contract->getFechaContrato()->getFechaInicio(),
+					'fecha_fin' => $contract->getFechaContrato()->getFechaFin(),
+				]
+			)
+			->andReturn($mockResult);
 
-        $result = $this->repository->findById($id);
+		$this->repository->save($contract);
+	}
 
-        $this->assertInstanceOf(Contract::class, $result);
-        $this->assertEquals($id, $result->getId());
-        $this->assertEquals('paciente-123', $result->getPacienteId());
-        $this->assertEquals('servicio-456', $result->getServicioId());
-    }
+	public function testFindByIdReturnsContractWhenExists(): void
+	{
+		$id = 'test-id';
+		$modelMock = new class ($id, $this->futureDateMutable, $this->furtherFutureDateMutable)
+			extends ContractModel
+		{
+			public $id;
+			public $paciente_id;
+			public $servicio_id;
+			public $plan_alimentario_id;
+			public $fecha_inicio;
+			public $fecha_fin;
+			private $data;
 
-    public function testFindByIdReturnsNullWhenNotExists(): void
-    {
-        $id = 'non-existent-id';
-        
-        $this->model->shouldReceive('find')
-            ->once()
-            ->with($id)
-            ->andReturn(null);
+			public function __construct($id, $fechaInicio, $fechaFin)
+			{
+				$this->id = $id;
+				$this->paciente_id = 'paciente-123';
+				$this->servicio_id = 'servicio-456';
+				$this->plan_alimentario_id = null;
+				$this->fecha_inicio = $fechaInicio;
+				$this->fecha_fin = $fechaFin;
+				$this->data = [
+					'id' => $id,
+					'paciente_id' => 'paciente-123',
+					'servicio_id' => 'servicio-456',
+					'plan_alimentario_id' => null,
+					'fecha_inicio' => $fechaInicio,
+					'fecha_fin' => $fechaFin,
+				];
+			}
+			public function toArray()
+			{
+				return $this->data;
+			}
+		};
 
-        $result = $this->repository->findById($id);
+		$this->model->shouldReceive('find')->once()->with($id)->andReturn($modelMock);
 
-        $this->assertNull($result);
-    }
+		$result = $this->repository->findById($id);
 
-    public function testFindByPacienteIdReturnsContracts(): void
-    {
-        $pacienteId = 'paciente-123';
-        
-        $contract1 = Mockery::mock(ContractModel::class);
-        $contract1->shouldReceive('getAttribute')
-            ->with('id')
-            ->andReturn('test-id-1');
-        $contract1->shouldReceive('getAttribute')
-            ->with('paciente_id')
-            ->andReturn($pacienteId);
-        $contract1->shouldReceive('getAttribute')
-            ->with('servicio_id')
-            ->andReturn('servicio-456');
-        $contract1->shouldReceive('getAttribute')
-            ->with('fecha_inicio')
-            ->andReturn($this->futureDateMutable);
-        $contract1->shouldReceive('getAttribute')
-            ->with('fecha_fin')
-            ->andReturn($this->furtherFutureDateMutable);
+		$this->assertInstanceOf(Contract::class, $result);
+		$this->assertEquals($id, $result->getId());
+		$this->assertEquals('paciente-123', $result->getPacienteId());
+		$this->assertEquals('servicio-456', $result->getServicioId());
+	}
 
-        $contract2 = Mockery::mock(ContractModel::class);
-        $contract2->shouldReceive('getAttribute')
-            ->with('id')
-            ->andReturn('test-id-2');
-        $contract2->shouldReceive('getAttribute')
-            ->with('paciente_id')
-            ->andReturn($pacienteId);
-        $contract2->shouldReceive('getAttribute')
-            ->with('servicio_id')
-            ->andReturn('servicio-789');
-        $contract2->shouldReceive('getAttribute')
-            ->with('fecha_inicio')
-            ->andReturn($this->futureDateMutable);
-        $contract2->shouldReceive('getAttribute')
-            ->with('fecha_fin')
-            ->andReturn($this->furtherFutureDateMutable);
+	public function testFindByIdReturnsNullWhenNotExists(): void
+	{
+		$id = 'non-existent-id';
 
-        $collection = new Collection([$contract1, $contract2]);
+		$this->model->shouldReceive('find')->once()->with($id)->andReturn(null);
 
-        $this->model->shouldReceive('where->get')
-            ->once()
-            ->andReturn($collection);
+		$result = $this->repository->findById($id);
 
-        $results = $this->repository->findByPacienteId($pacienteId);
+		$this->assertNull($result);
+	}
 
-        $this->assertCount(2, $results);
-        $this->assertContainsOnlyInstancesOf(Contract::class, $results);
-        
-        $this->assertEquals('test-id-1', $results[0]->getId());
-        $this->assertEquals($pacienteId, $results[0]->getPacienteId());
-        $this->assertEquals('servicio-456', $results[0]->getServicioId());
-        
-        $this->assertEquals('test-id-2', $results[1]->getId());
-        $this->assertEquals($pacienteId, $results[1]->getPacienteId());
-        $this->assertEquals('servicio-789', $results[1]->getServicioId());
-    }
+	public function testFindByPacienteIdReturnsContracts(): void
+	{
+		$pacienteId = 'paciente-123';
 
-    public function testFindAllReturnsAllContracts(): void
-    {
-        $contract1 = Mockery::mock(ContractModel::class);
-        $contract1->shouldReceive('getAttribute')
-            ->with('id')
-            ->andReturn('test-id-1');
-        $contract1->shouldReceive('getAttribute')
-            ->with('paciente_id')
-            ->andReturn('paciente-123');
-        $contract1->shouldReceive('getAttribute')
-            ->with('servicio_id')
-            ->andReturn('servicio-456');
-        $contract1->shouldReceive('getAttribute')
-            ->with('fecha_inicio')
-            ->andReturn($this->futureDateMutable);
-        $contract1->shouldReceive('getAttribute')
-            ->with('fecha_fin')
-            ->andReturn($this->furtherFutureDateMutable);
+		$contract1 = new class (
+			'test-id-1',
+			$pacienteId,
+			'servicio-456',
+			$this->futureDateMutable,
+			$this->furtherFutureDateMutable
+		) extends ContractModel {
+			public $id;
+			public $paciente_id;
+			public $servicio_id;
+			public $plan_alimentario_id;
+			public $fecha_inicio;
+			public $fecha_fin;
+			private $data;
 
-        $contract2 = Mockery::mock(ContractModel::class);
-        $contract2->shouldReceive('getAttribute')
-            ->with('id')
-            ->andReturn('test-id-2');
-        $contract2->shouldReceive('getAttribute')
-            ->with('paciente_id')
-            ->andReturn('paciente-789');
-        $contract2->shouldReceive('getAttribute')
-            ->with('servicio_id')
-            ->andReturn('servicio-012');
-        $contract2->shouldReceive('getAttribute')
-            ->with('fecha_inicio')
-            ->andReturn($this->futureDateMutable);
-        $contract2->shouldReceive('getAttribute')
-            ->with('fecha_fin')
-            ->andReturn($this->furtherFutureDateMutable);
+			public function __construct($id, $pacienteId, $servicioId, $fechaInicio, $fechaFin)
+			{
+				$this->id = $id;
+				$this->paciente_id = $pacienteId;
+				$this->servicio_id = $servicioId;
+				$this->plan_alimentario_id = null;
+				$this->fecha_inicio = $fechaInicio;
+				$this->fecha_fin = $fechaFin;
+				$this->data = [
+					'id' => $id,
+					'paciente_id' => $pacienteId,
+					'servicio_id' => $servicioId,
+					'plan_alimentario_id' => null,
+					'fecha_inicio' => $fechaInicio,
+					'fecha_fin' => $fechaFin,
+				];
+			}
+			public function toArray()
+			{
+				return $this->data;
+			}
+		};
 
-        $collection = new Collection([$contract1, $contract2]);
+		$contract2 = new class (
+			'test-id-2',
+			$pacienteId,
+			'servicio-789',
+			$this->futureDateMutable,
+			$this->furtherFutureDateMutable
+		) extends ContractModel {
+			public $id;
+			public $paciente_id;
+			public $servicio_id;
+			public $plan_alimentario_id;
+			public $fecha_inicio;
+			public $fecha_fin;
+			private $data;
 
-        $this->model->shouldReceive('all')
-            ->once()
-            ->andReturn($collection);
+			public function __construct($id, $pacienteId, $servicioId, $fechaInicio, $fechaFin)
+			{
+				$this->id = $id;
+				$this->paciente_id = $pacienteId;
+				$this->servicio_id = $servicioId;
+				$this->plan_alimentario_id = null;
+				$this->fecha_inicio = $fechaInicio;
+				$this->fecha_fin = $fechaFin;
+				$this->data = [
+					'id' => $id,
+					'paciente_id' => $pacienteId,
+					'servicio_id' => $servicioId,
+					'plan_alimentario_id' => null,
+					'fecha_inicio' => $fechaInicio,
+					'fecha_fin' => $fechaFin,
+				];
+			}
+			public function toArray()
+			{
+				return $this->data;
+			}
+		};
 
-        $results = $this->repository->findAll();
+		$collection = new Collection([$contract1, $contract2]);
 
-        $this->assertCount(2, $results);
-        $this->assertContainsOnlyInstancesOf(Contract::class, $results);
-        
-        $this->assertEquals('test-id-1', $results[0]->getId());
-        $this->assertEquals('paciente-123', $results[0]->getPacienteId());
-        $this->assertEquals('servicio-456', $results[0]->getServicioId());
-        
-        $this->assertEquals('test-id-2', $results[1]->getId());
-        $this->assertEquals('paciente-789', $results[1]->getPacienteId());
-        $this->assertEquals('servicio-012', $results[1]->getServicioId());
-    }
+		$this->model->shouldReceive('where->get')->once()->andReturn($collection);
 
-    public function testDeleteRemovesContract(): void
-    {
-        $id = 'test-id';
-        
-        $this->model->shouldReceive('destroy')
-            ->once()
-            ->with($id);
+		$results = $this->repository->findByPacienteId($pacienteId);
 
-        $this->repository->delete($id);
-    }
-} 
+		$this->assertCount(2, $results);
+		$this->assertContainsOnlyInstancesOf(Contract::class, $results);
+
+		$this->assertEquals('test-id-1', $results[0]->getId());
+		$this->assertEquals($pacienteId, $results[0]->getPacienteId());
+		$this->assertEquals('servicio-456', $results[0]->getServicioId());
+
+		$this->assertEquals('test-id-2', $results[1]->getId());
+		$this->assertEquals($pacienteId, $results[1]->getPacienteId());
+		$this->assertEquals('servicio-789', $results[1]->getServicioId());
+	}
+
+	public function testFindAllReturnsAllContracts(): void
+	{
+		$contract1 = new class (
+			'test-id-1',
+			'paciente-123',
+			'servicio-456',
+			$this->futureDateMutable,
+			$this->furtherFutureDateMutable
+		) extends ContractModel {
+			public $id;
+			public $paciente_id;
+			public $servicio_id;
+			public $plan_alimentario_id;
+			public $fecha_inicio;
+			public $fecha_fin;
+			private $data;
+
+			public function __construct($id, $pacienteId, $servicioId, $fechaInicio, $fechaFin)
+			{
+				$this->id = $id;
+				$this->paciente_id = $pacienteId;
+				$this->servicio_id = $servicioId;
+				$this->plan_alimentario_id = null;
+				$this->fecha_inicio = $fechaInicio;
+				$this->fecha_fin = $fechaFin;
+				$this->data = [
+					'id' => $id,
+					'paciente_id' => $pacienteId,
+					'servicio_id' => $servicioId,
+					'plan_alimentario_id' => null,
+					'fecha_inicio' => $fechaInicio,
+					'fecha_fin' => $fechaFin,
+				];
+			}
+			public function toArray()
+			{
+				return $this->data;
+			}
+		};
+
+		$contract2 = new class (
+			'test-id-2',
+			'paciente-456',
+			'servicio-789',
+			$this->futureDateMutable,
+			$this->furtherFutureDateMutable
+		) extends ContractModel {
+			public $id;
+			public $paciente_id;
+			public $servicio_id;
+			public $plan_alimentario_id;
+			public $fecha_inicio;
+			public $fecha_fin;
+			private $data;
+
+			public function __construct($id, $pacienteId, $servicioId, $fechaInicio, $fechaFin)
+			{
+				$this->id = $id;
+				$this->paciente_id = $pacienteId;
+				$this->servicio_id = $servicioId;
+				$this->plan_alimentario_id = null;
+				$this->fecha_inicio = $fechaInicio;
+				$this->fecha_fin = $fechaFin;
+				$this->data = [
+					'id' => $id,
+					'paciente_id' => $pacienteId,
+					'servicio_id' => $servicioId,
+					'plan_alimentario_id' => null,
+					'fecha_inicio' => $fechaInicio,
+					'fecha_fin' => $fechaFin,
+				];
+			}
+			public function toArray()
+			{
+				return $this->data;
+			}
+		};
+
+		$collection = new Collection([$contract1, $contract2]);
+
+		$this->model->shouldReceive('all')->once()->andReturn($collection);
+
+		$results = $this->repository->findAll();
+
+		$this->assertCount(2, $results);
+		$this->assertContainsOnlyInstancesOf(Contract::class, $results);
+
+		$this->assertEquals('test-id-1', $results[0]->getId());
+		$this->assertEquals('paciente-123', $results[0]->getPacienteId());
+		$this->assertEquals('servicio-456', $results[0]->getServicioId());
+
+		$this->assertEquals('test-id-2', $results[1]->getId());
+		$this->assertEquals('paciente-456', $results[1]->getPacienteId());
+		$this->assertEquals('servicio-789', $results[1]->getServicioId());
+	}
+
+	public function testDeleteRemovesContract(): void
+	{
+		$id = 'test-id';
+
+		$this->model->shouldReceive('destroy')->once()->with($id);
+
+		$this->repository->delete($id);
+	}
+}

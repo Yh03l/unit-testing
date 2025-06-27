@@ -28,4 +28,9 @@ class InMemoryEventBus implements EventBus
 	{
 		$this->events = [];
 	}
+
+	public function clearEvents(): void
+	{
+		$this->clear();
+	}
 }

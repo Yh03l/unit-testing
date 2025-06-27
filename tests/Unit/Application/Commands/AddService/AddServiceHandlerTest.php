@@ -39,7 +39,7 @@ class AddServiceHandlerTest extends MockeryTestCase
 		$this->costo = 100.0;
 		$this->moneda = 'BOB';
 		$this->vigencia = new DateTimeImmutable('2024-12-31');
-		$this->tipoServicioId = 'tipo-123';
+		$this->tipoServicioId = 'asesoramiento';
 
 		$this->catalog = Mockery::mock(Catalog::class);
 	}
@@ -133,7 +133,7 @@ class AddServiceHandlerTest extends MockeryTestCase
 						$service->getCosto()->getMonto() === $this->costo &&
 						$service->getCosto()->getMoneda() === $this->moneda &&
 						$service->getCosto()->getVigencia() === $this->vigencia &&
-						$service->getTipoServicioId() === $this->tipoServicioId;
+						$service->getTipoServicio()->toString() === $this->tipoServicioId;
 				})
 			);
 

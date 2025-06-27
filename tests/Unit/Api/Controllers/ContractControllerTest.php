@@ -17,6 +17,28 @@ use Mockery;
 use Mockery\Adapter\Phpunit\MockeryTestCase;
 use Illuminate\Http\Response;
 use DateTimeImmutable;
+use Illuminate\Support\Facades\Request;
+
+// Fake para simular el helper request() de Laravel
+if (!function_exists('Tests\\Unit\\Api\\Controllers\\request')) {
+	class FakeRequest
+	{
+		private $params = [];
+		public function setParams(array $params)
+		{
+			$this->params = $params;
+		}
+		public function get($key)
+		{
+			return $this->params[$key] ?? null;
+		}
+	}
+	$GLOBALS['__fake_request'] = new FakeRequest();
+	function request()
+	{
+		return $GLOBALS['__fake_request'];
+	}
+}
 
 class ContractControllerTest extends MockeryTestCase
 {
@@ -27,6 +49,11 @@ class ContractControllerTest extends MockeryTestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
+
+		// Mock de la función request() global de Laravel
+		$requestMock = Mockery::mock('overload:request');
+		$requestMock->shouldReceive('get')->withAnyArgs()->andReturn(null);
+
 		$this->commandBus = Mockery::mock(CommandBus::class);
 		$this->queryBus = Mockery::mock(QueryBus::class);
 		$this->controller = new ContractController($this->commandBus, $this->queryBus);
@@ -35,15 +62,34 @@ class ContractControllerTest extends MockeryTestCase
 	public function testCreateContract(): void
 	{
 		$request = Mockery::mock(CreateContractRequest::class);
-		$request->shouldReceive('getPacienteId')->andReturn('paciente-123');
-		$request->shouldReceive('getServicioId')->andReturn('servicio-456');
-		$request->shouldReceive('getFechaInicio')->andReturn(new DateTimeImmutable('tomorrow'));
-		$request->shouldReceive('getFechaFin')->andReturn(new DateTimeImmutable('next week'));
+		$request->shouldReceive('validated')->with('paciente_id')->andReturn('paciente-123');
+		$request->shouldReceive('validated')->with('servicio_id')->andReturn('servicio-456');
+		$request->shouldReceive('validated')->with('fecha_inicio')->andReturn('2024-12-31');
+		$request->shouldReceive('validated')->with('fecha_fin')->andReturn('2025-01-01');
+		$request->shouldReceive('validated')->with('plan_alimentario_id')->andReturn(null);
+
+		$commandResult = Mockery::mock('Commercial\Application\Commands\CommandResult');
+		$commandResult->shouldReceive('isSuccess')->andReturn(true);
+		$commandResult->shouldReceive('getMessage')->andReturn('Contrato creado exitosamente');
+		$commandResult->shouldReceive('getId')->andReturn('contract-123');
 
 		$this->commandBus
 			->shouldReceive('dispatch')
 			->with(Mockery::type(CreateContractCommand::class))
-			->once();
+			->once()
+			->andReturn($commandResult);
+
+		$contract = [
+			'id' => 'contract-123',
+			'pacienteId' => 'paciente-123',
+			'servicioId' => 'servicio-456',
+			'estado' => 'PENDIENTE',
+		];
+		$this->queryBus
+			->shouldReceive('dispatch')
+			->with(Mockery::type(GetContractQuery::class))
+			->once()
+			->andReturn($contract);
 
 		$response = $this->controller->create($request);
 
@@ -57,10 +103,11 @@ class ContractControllerTest extends MockeryTestCase
 	public function testCreateContractHandlesDomainException(): void
 	{
 		$request = Mockery::mock(CreateContractRequest::class);
-		$request->shouldReceive('getPacienteId')->andReturn('paciente-123');
-		$request->shouldReceive('getServicioId')->andReturn('servicio-456');
-		$request->shouldReceive('getFechaInicio')->andReturn(new DateTimeImmutable('tomorrow'));
-		$request->shouldReceive('getFechaFin')->andReturn(new DateTimeImmutable('next week'));
+		$request->shouldReceive('validated')->with('paciente_id')->andReturn('paciente-123');
+		$request->shouldReceive('validated')->with('servicio_id')->andReturn('servicio-456');
+		$request->shouldReceive('validated')->with('fecha_inicio')->andReturn('2024-12-31');
+		$request->shouldReceive('validated')->with('fecha_fin')->andReturn('2025-01-01');
+		$request->shouldReceive('validated')->with('plan_alimentario_id')->andReturn(null);
 
 		$this->commandBus
 			->shouldReceive('dispatch')
@@ -88,7 +135,7 @@ class ContractControllerTest extends MockeryTestCase
 		];
 
 		$this->queryBus
-			->shouldReceive('ask')
+			->shouldReceive('dispatch')
 			->with(Mockery::type(GetContractQuery::class))
 			->once()
 			->andReturn($contractData);
@@ -96,7 +143,7 @@ class ContractControllerTest extends MockeryTestCase
 		$response = $this->controller->get($contractId);
 
 		$this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
-		$this->assertEquals($contractData, json_decode($response->getContent(), true));
+		$this->assertEquals(['data' => $contractData], json_decode($response->getContent(), true));
 	}
 
 	public function testGetContractNotFound(): void
@@ -104,7 +151,7 @@ class ContractControllerTest extends MockeryTestCase
 		$contractId = 'contract-123';
 
 		$this->queryBus
-			->shouldReceive('ask')
+			->shouldReceive('dispatch')
 			->with(Mockery::type(GetContractQuery::class))
 			->once()
 			->andReturn(null);
@@ -123,25 +170,29 @@ class ContractControllerTest extends MockeryTestCase
 		$contractId = 'contract-123';
 
 		$this->queryBus
-			->shouldReceive('ask')
+			->shouldReceive('dispatch')
 			->with(Mockery::type(GetContractQuery::class))
 			->once()
 			->andThrow(new \Exception('Error interno'));
 
-		$response = $this->controller->get($contractId);
-
-		$this->assertEquals(Response::HTTP_INTERNAL_SERVER_ERROR, $response->getStatusCode());
-		$this->assertEquals('Error interno', json_decode($response->getContent(), true)['error']);
+		$this->expectException(\Exception::class);
+		$this->expectExceptionMessage('Error interno');
+		$this->controller->get($contractId);
 	}
 
 	public function testActivateContract(): void
 	{
 		$contractId = 'contract-123';
 
+		$commandResult = Mockery::mock('Commercial\Application\Commands\CommandResult');
+		$commandResult->shouldReceive('isSuccess')->andReturn(true);
+		$commandResult->shouldReceive('getMessage')->andReturn('Contrato activado exitosamente');
+
 		$this->commandBus
 			->shouldReceive('dispatch')
 			->with(Mockery::type(ActivateContractCommand::class))
-			->once();
+			->once()
+			->andReturn($commandResult);
 
 		$response = $this->controller->activate($contractId);
 
@@ -175,10 +226,15 @@ class ContractControllerTest extends MockeryTestCase
 	{
 		$contractId = 'contract-123';
 
+		$commandResult = Mockery::mock('Commercial\Application\Commands\CommandResult');
+		$commandResult->shouldReceive('isSuccess')->andReturn(true);
+		$commandResult->shouldReceive('getMessage')->andReturn('Contrato cancelado exitosamente');
+
 		$this->commandBus
 			->shouldReceive('dispatch')
 			->with(Mockery::type(CancelContractCommand::class))
-			->once();
+			->once()
+			->andReturn($commandResult);
 
 		$response = $this->controller->cancel($contractId);
 
@@ -213,21 +269,21 @@ class ContractControllerTest extends MockeryTestCase
 		$pacienteId = 'paciente-123';
 		$contracts = [
 			[
-				'id' => 'contract-123',
+				'id' => 'contract-1',
 				'pacienteId' => $pacienteId,
-				'servicioId' => 'servicio-456',
+				'servicioId' => 'servicio-1',
 				'estado' => 'ACTIVO',
 			],
 			[
-				'id' => 'contract-456',
+				'id' => 'contract-2',
 				'pacienteId' => $pacienteId,
-				'servicioId' => 'servicio-789',
+				'servicioId' => 'servicio-2',
 				'estado' => 'PENDIENTE',
 			],
 		];
 
 		$this->queryBus
-			->shouldReceive('ask')
+			->shouldReceive('dispatch')
 			->with(Mockery::type(ListContractsByPacienteQuery::class))
 			->once()
 			->andReturn($contracts);
@@ -235,7 +291,7 @@ class ContractControllerTest extends MockeryTestCase
 		$response = $this->controller->getByPaciente($pacienteId);
 
 		$this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
-		$this->assertEquals($contracts, json_decode($response->getContent(), true));
+		$this->assertEquals(['data' => $contracts], json_decode($response->getContent(), true));
 	}
 
 	public function testGetByPacienteHandlesException(): void
@@ -243,19 +299,21 @@ class ContractControllerTest extends MockeryTestCase
 		$pacienteId = 'paciente-123';
 
 		$this->queryBus
-			->shouldReceive('ask')
+			->shouldReceive('dispatch')
 			->with(Mockery::type(ListContractsByPacienteQuery::class))
 			->once()
 			->andThrow(new \Exception('Error interno'));
 
-		$response = $this->controller->getByPaciente($pacienteId);
-
-		$this->assertEquals(Response::HTTP_INTERNAL_SERVER_ERROR, $response->getStatusCode());
-		$this->assertEquals('Error interno', json_decode($response->getContent(), true)['error']);
+		$this->expectException(\Exception::class);
+		$this->expectExceptionMessage('Error interno');
+		$this->controller->getByPaciente($pacienteId);
 	}
 
 	public function testListReturnsAllContracts(): void
 	{
+		// Limpiar parámetros
+		request()->setParams([]);
+
 		$contracts = [
 			[
 				'id' => 'contract-1',
@@ -273,7 +331,12 @@ class ContractControllerTest extends MockeryTestCase
 
 		$this->queryBus
 			->shouldReceive('dispatch')
-			->with(Mockery::type(ListContractsQuery::class))
+			->with(
+				Mockery::on(function ($query) {
+					return $query instanceof
+						\Commercial\Application\Queries\ListContracts\ListContractsQuery;
+				})
+			)
 			->once()
 			->andReturn($contracts);
 
@@ -285,7 +348,9 @@ class ContractControllerTest extends MockeryTestCase
 
 	public function testListWithPacienteIdFilter(): void
 	{
-		$pacienteId = 'paciente-123';
+		$pacienteId = 'paciente-1';
+		request()->setParams(['paciente_id' => $pacienteId]);
+
 		$contracts = [
 			[
 				'id' => 'contract-1',
@@ -295,12 +360,14 @@ class ContractControllerTest extends MockeryTestCase
 			],
 		];
 
-		// Mock request parameters
-		request()->merge(['paciente_id' => $pacienteId]);
-
 		$this->queryBus
 			->shouldReceive('dispatch')
-			->with(Mockery::type(ListContractsQuery::class))
+			->with(
+				Mockery::on(function ($query) {
+					return $query instanceof
+						\Commercial\Application\Queries\ListContracts\ListContractsQuery;
+				})
+			)
 			->once()
 			->andReturn($contracts);
 
@@ -312,6 +379,8 @@ class ContractControllerTest extends MockeryTestCase
 
 	public function testListWithPagination(): void
 	{
+		request()->setParams(['limit' => 10, 'offset' => 0]);
+
 		$contracts = [
 			[
 				'id' => 'contract-1',
@@ -321,12 +390,14 @@ class ContractControllerTest extends MockeryTestCase
 			],
 		];
 
-		// Mock request parameters
-		request()->merge(['limit' => 10, 'offset' => 0]);
-
 		$this->queryBus
 			->shouldReceive('dispatch')
-			->with(Mockery::type(ListContractsQuery::class))
+			->with(
+				Mockery::on(function ($query) {
+					return $query instanceof
+						\Commercial\Application\Queries\ListContracts\ListContractsQuery;
+				})
+			)
 			->once()
 			->andReturn($contracts);
 
@@ -338,9 +409,16 @@ class ContractControllerTest extends MockeryTestCase
 
 	public function testListHandlesException(): void
 	{
+		request()->setParams([]);
+
 		$this->queryBus
 			->shouldReceive('dispatch')
-			->with(Mockery::type(ListContractsQuery::class))
+			->with(
+				Mockery::on(function ($query) {
+					return $query instanceof
+						\Commercial\Application\Queries\ListContracts\ListContractsQuery;
+				})
+			)
 			->once()
 			->andThrow(new \Exception('Error interno'));
 

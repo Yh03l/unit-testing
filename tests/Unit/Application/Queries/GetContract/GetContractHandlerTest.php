@@ -17,81 +17,86 @@ use Mockery\MockInterface;
 
 class GetContractHandlerTest extends MockeryTestCase
 {
-    private GetContractHandler $handler;
-    private ContractRepository|MockInterface $repository;
-    private string $contractId;
-    private GetContractQuery $query;
-    private DateTimeImmutable $fechaInicio;
-    private DateTimeImmutable $fechaFin;
+	private GetContractHandler $handler;
+	private ContractRepository|MockInterface $repository;
+	private string $contractId;
+	private GetContractQuery $query;
+	private DateTimeImmutable $fechaInicio;
+	private DateTimeImmutable $fechaFin;
 
-    protected function setUp(): void
-    {
-        $this->repository = Mockery::mock(ContractRepository::class);
-        $this->handler = new GetContractHandler($this->repository);
-        
-        $this->contractId = 'contract-123';
-        $this->query = new GetContractQuery($this->contractId);
-        
-        $this->fechaInicio = new DateTimeImmutable('2024-01-01');
-        $this->fechaFin = new DateTimeImmutable('2024-12-31');
-    }
+	protected function setUp(): void
+	{
+		$this->repository = Mockery::mock(ContractRepository::class);
+		$this->handler = new GetContractHandler($this->repository);
 
-    public function testHandleReturnsContractDTOWhenContractExists(): void
-    {
-        $contract = Mockery::mock(Contract::class);
-        $contract->shouldReceive('getId')->andReturn($this->contractId);
-        $contract->shouldReceive('getPacienteId')->andReturn('paciente-123');
-        $contract->shouldReceive('getServicioId')->andReturn('servicio-456');
-        $contract->shouldReceive('getFechaContrato->getFechaInicio')->andReturn($this->fechaInicio);
-        $contract->shouldReceive('getFechaContrato->getFechaFin')->andReturn($this->fechaFin);
-        $contract->shouldReceive('getEstado')->andReturn('ACTIVO');
+		$this->contractId = 'contract-123';
+		$this->query = new GetContractQuery($this->contractId);
 
-        $this->repository->shouldReceive('findById')
-            ->once()
-            ->with($this->contractId)
-            ->andReturn($contract);
+		$this->fechaInicio = new DateTimeImmutable('2024-01-01');
+		$this->fechaFin = new DateTimeImmutable('2024-12-31');
+	}
 
-        $result = $this->handler->handle($this->query);
+	public function testHandleReturnsContractDTOWhenContractExists(): void
+	{
+		$contract = Mockery::mock(Contract::class);
+		$contract->shouldReceive('getId')->andReturn($this->contractId);
+		$contract->shouldReceive('getPacienteId')->andReturn('paciente-123');
+		$contract->shouldReceive('getServicioId')->andReturn('servicio-456');
+		$contract->shouldReceive('getPlanAlimentarioId')->andReturn(null);
+		$contract->shouldReceive('getFechaContrato->getFechaInicio')->andReturn($this->fechaInicio);
+		$contract->shouldReceive('getFechaContrato->getFechaFin')->andReturn($this->fechaFin);
+		$contract->shouldReceive('getEstado')->andReturn('ACTIVO');
 
-        $this->assertInstanceOf(ContractDTO::class, $result);
-        $this->assertEquals($this->contractId, $result->id);
-        $this->assertEquals('paciente-123', $result->pacienteId);
-        $this->assertEquals('servicio-456', $result->servicioId);
-        $this->assertEquals($this->fechaInicio, $result->fechaInicio);
-        $this->assertEquals($this->fechaFin, $result->fechaFin);
-        $this->assertEquals('ACTIVO', $result->estado);
-    }
+		$this->repository
+			->shouldReceive('findById')
+			->once()
+			->with($this->contractId)
+			->andReturn($contract);
 
-    public function testHandleReturnsNullWhenContractNotFound(): void
-    {
-        $this->repository->shouldReceive('findById')
-            ->once()
-            ->with($this->contractId)
-            ->andReturn(null);
+		$result = $this->handler->handle($this->query);
 
-        $result = $this->handler->handle($this->query);
+		$this->assertInstanceOf(ContractDTO::class, $result);
+		$this->assertEquals($this->contractId, $result->id);
+		$this->assertEquals('paciente-123', $result->pacienteId);
+		$this->assertEquals('servicio-456', $result->servicioId);
+		$this->assertEquals($this->fechaInicio, $result->fechaInicio);
+		$this->assertEquals($this->fechaFin, $result->fechaFin);
+		$this->assertEquals('ACTIVO', $result->estado);
+	}
 
-        $this->assertNull($result);
-    }
+	public function testHandleReturnsNullWhenContractNotFound(): void
+	{
+		$this->repository
+			->shouldReceive('findById')
+			->once()
+			->with($this->contractId)
+			->andReturn(null);
 
-    public function testInvokeCallsHandle(): void
-    {
-        $contract = Mockery::mock(Contract::class);
-        $contract->shouldReceive('getId')->andReturn($this->contractId);
-        $contract->shouldReceive('getPacienteId')->andReturn('paciente-123');
-        $contract->shouldReceive('getServicioId')->andReturn('servicio-456');
-        $contract->shouldReceive('getFechaContrato->getFechaInicio')->andReturn($this->fechaInicio);
-        $contract->shouldReceive('getFechaContrato->getFechaFin')->andReturn($this->fechaFin);
-        $contract->shouldReceive('getEstado')->andReturn('ACTIVO');
+		$result = $this->handler->handle($this->query);
 
-        $this->repository->shouldReceive('findById')
-            ->once()
-            ->with($this->contractId)
-            ->andReturn($contract);
+		$this->assertNull($result);
+	}
 
-        $result = $this->handler->handle($this->query);
+	public function testInvokeCallsHandle(): void
+	{
+		$contract = Mockery::mock(Contract::class);
+		$contract->shouldReceive('getId')->andReturn($this->contractId);
+		$contract->shouldReceive('getPacienteId')->andReturn('paciente-123');
+		$contract->shouldReceive('getServicioId')->andReturn('servicio-456');
+		$contract->shouldReceive('getPlanAlimentarioId')->andReturn(null);
+		$contract->shouldReceive('getFechaContrato->getFechaInicio')->andReturn($this->fechaInicio);
+		$contract->shouldReceive('getFechaContrato->getFechaFin')->andReturn($this->fechaFin);
+		$contract->shouldReceive('getEstado')->andReturn('ACTIVO');
 
-        $this->assertInstanceOf(ContractDTO::class, $result);
-        $this->assertEquals($this->contractId, $result->id);
-    }
-} 
+		$this->repository
+			->shouldReceive('findById')
+			->once()
+			->with($this->contractId)
+			->andReturn($contract);
+
+		$result = $this->handler->handle($this->query);
+
+		$this->assertInstanceOf(ContractDTO::class, $result);
+		$this->assertEquals($this->contractId, $result->id);
+	}
+}

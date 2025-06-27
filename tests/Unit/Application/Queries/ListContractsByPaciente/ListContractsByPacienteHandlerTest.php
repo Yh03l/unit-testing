@@ -17,114 +17,120 @@ use Mockery\MockInterface;
 
 class ListContractsByPacienteHandlerTest extends MockeryTestCase
 {
-    private ListContractsByPacienteHandler $handler;
-    private ContractRepository|MockInterface $repository;
-    private string $pacienteId;
-    private ListContractsByPacienteQuery $query;
-    private DateTimeImmutable $fechaInicio;
-    private DateTimeImmutable $fechaFin;
+	private ListContractsByPacienteHandler $handler;
+	private ContractRepository|MockInterface $repository;
+	private string $pacienteId;
+	private ListContractsByPacienteQuery $query;
+	private DateTimeImmutable $fechaInicio;
+	private DateTimeImmutable $fechaFin;
 
-    protected function setUp(): void
-    {
-        $this->repository = Mockery::mock(ContractRepository::class);
-        $this->handler = new ListContractsByPacienteHandler($this->repository);
-        
-        $this->pacienteId = 'paciente-123';
-        $this->query = new ListContractsByPacienteQuery($this->pacienteId);
-        
-        $this->fechaInicio = new DateTimeImmutable('2024-01-01');
-        $this->fechaFin = new DateTimeImmutable('2024-12-31');
-    }
+	protected function setUp(): void
+	{
+		$this->repository = Mockery::mock(ContractRepository::class);
+		$this->handler = new ListContractsByPacienteHandler($this->repository);
 
-    public function testHandleReturnsContractDTOsWhenContractsExist(): void
-    {
-        // Mock ContractDate para el primer contrato
-        $contractDate1 = Mockery::mock(ContractDate::class);
-        $contractDate1->shouldReceive('getFechaInicio')->andReturn($this->fechaInicio);
-        $contractDate1->shouldReceive('getFechaFin')->andReturn($this->fechaFin);
+		$this->pacienteId = 'paciente-123';
+		$this->query = new ListContractsByPacienteQuery($this->pacienteId);
 
-        // Mock ContractDate para el segundo contrato
-        $contractDate2 = Mockery::mock(ContractDate::class);
-        $contractDate2->shouldReceive('getFechaInicio')->andReturn($this->fechaInicio);
-        $contractDate2->shouldReceive('getFechaFin')->andReturn($this->fechaFin);
+		$this->fechaInicio = new DateTimeImmutable('2024-01-01');
+		$this->fechaFin = new DateTimeImmutable('2024-12-31');
+	}
 
-        $contract1 = Mockery::mock(Contract::class);
-        $contract1->shouldReceive('getId')->andReturn('contract-1');
-        $contract1->shouldReceive('getPacienteId')->andReturn($this->pacienteId);
-        $contract1->shouldReceive('getServicioId')->andReturn('servicio-1');
-        $contract1->shouldReceive('getFechaContrato')->andReturn($contractDate1);
-        $contract1->shouldReceive('getEstado')->andReturn('ACTIVO');
+	public function testHandleReturnsContractDTOsWhenContractsExist(): void
+	{
+		// Mock ContractDate para el primer contrato
+		$contractDate1 = Mockery::mock(ContractDate::class);
+		$contractDate1->shouldReceive('getFechaInicio')->andReturn($this->fechaInicio);
+		$contractDate1->shouldReceive('getFechaFin')->andReturn($this->fechaFin);
 
-        $contract2 = Mockery::mock(Contract::class);
-        $contract2->shouldReceive('getId')->andReturn('contract-2');
-        $contract2->shouldReceive('getPacienteId')->andReturn($this->pacienteId);
-        $contract2->shouldReceive('getServicioId')->andReturn('servicio-2');
-        $contract2->shouldReceive('getFechaContrato')->andReturn($contractDate2);
-        $contract2->shouldReceive('getEstado')->andReturn('PENDIENTE');
+		// Mock ContractDate para el segundo contrato
+		$contractDate2 = Mockery::mock(ContractDate::class);
+		$contractDate2->shouldReceive('getFechaInicio')->andReturn($this->fechaInicio);
+		$contractDate2->shouldReceive('getFechaFin')->andReturn($this->fechaFin);
 
-        $this->repository->shouldReceive('findByPacienteId')
-            ->once()
-            ->with($this->pacienteId)
-            ->andReturn([$contract1, $contract2]);
+		$contract1 = Mockery::mock(Contract::class);
+		$contract1->shouldReceive('getId')->andReturn('contract-1');
+		$contract1->shouldReceive('getPacienteId')->andReturn($this->pacienteId);
+		$contract1->shouldReceive('getServicioId')->andReturn('servicio-1');
+		$contract1->shouldReceive('getPlanAlimentarioId')->andReturn(null);
+		$contract1->shouldReceive('getFechaContrato')->andReturn($contractDate1);
+		$contract1->shouldReceive('getEstado')->andReturn('ACTIVO');
 
-        $result = $this->handler->handle($this->query);
+		$contract2 = Mockery::mock(Contract::class);
+		$contract2->shouldReceive('getId')->andReturn('contract-2');
+		$contract2->shouldReceive('getPacienteId')->andReturn($this->pacienteId);
+		$contract2->shouldReceive('getServicioId')->andReturn('servicio-2');
+		$contract2->shouldReceive('getPlanAlimentarioId')->andReturn(null);
+		$contract2->shouldReceive('getFechaContrato')->andReturn($contractDate2);
+		$contract2->shouldReceive('getEstado')->andReturn('PENDIENTE');
 
-        $this->assertCount(2, $result);
-        $this->assertContainsOnlyInstancesOf(ContractDTO::class, $result);
-        
-        // Verificar el primer contrato
-        $this->assertEquals('contract-1', $result[0]->id);
-        $this->assertEquals($this->pacienteId, $result[0]->pacienteId);
-        $this->assertEquals('servicio-1', $result[0]->servicioId);
-        $this->assertEquals($this->fechaInicio, $result[0]->fechaInicio);
-        $this->assertEquals($this->fechaFin, $result[0]->fechaFin);
-        $this->assertEquals('ACTIVO', $result[0]->estado);
+		$this->repository
+			->shouldReceive('findByPacienteId')
+			->once()
+			->with($this->pacienteId)
+			->andReturn([$contract1, $contract2]);
 
-        // Verificar el segundo contrato
-        $this->assertEquals('contract-2', $result[1]->id);
-        $this->assertEquals($this->pacienteId, $result[1]->pacienteId);
-        $this->assertEquals('servicio-2', $result[1]->servicioId);
-        $this->assertEquals($this->fechaInicio, $result[1]->fechaInicio);
-        $this->assertEquals($this->fechaFin, $result[1]->fechaFin);
-        $this->assertEquals('PENDIENTE', $result[1]->estado);
-    }
+		$result = $this->handler->handle($this->query);
 
-    public function testHandleReturnsEmptyArrayWhenNoContracts(): void
-    {
-        $this->repository->shouldReceive('findByPacienteId')
-            ->once()
-            ->with($this->pacienteId)
-            ->andReturn([]);
+		$this->assertCount(2, $result);
+		$this->assertContainsOnlyInstancesOf(ContractDTO::class, $result);
 
-        $result = $this->handler->handle($this->query);
+		// Verificar el primer contrato
+		$this->assertEquals('contract-1', $result[0]->id);
+		$this->assertEquals($this->pacienteId, $result[0]->pacienteId);
+		$this->assertEquals('servicio-1', $result[0]->servicioId);
+		$this->assertEquals($this->fechaInicio, $result[0]->fechaInicio);
+		$this->assertEquals($this->fechaFin, $result[0]->fechaFin);
+		$this->assertEquals('ACTIVO', $result[0]->estado);
 
-        $this->assertIsArray($result);
-        $this->assertEmpty($result);
-    }
+		// Verificar el segundo contrato
+		$this->assertEquals('contract-2', $result[1]->id);
+		$this->assertEquals($this->pacienteId, $result[1]->pacienteId);
+		$this->assertEquals('servicio-2', $result[1]->servicioId);
+		$this->assertEquals($this->fechaInicio, $result[1]->fechaInicio);
+		$this->assertEquals($this->fechaFin, $result[1]->fechaFin);
+		$this->assertEquals('PENDIENTE', $result[1]->estado);
+	}
 
-    public function testInvokeCallsHandle(): void
-    {
-        // Mock ContractDate
-        $contractDate = Mockery::mock(ContractDate::class);
-        $contractDate->shouldReceive('getFechaInicio')->andReturn($this->fechaInicio);
-        $contractDate->shouldReceive('getFechaFin')->andReturn($this->fechaFin);
+	public function testHandleReturnsEmptyArrayWhenNoContracts(): void
+	{
+		$this->repository
+			->shouldReceive('findByPacienteId')
+			->once()
+			->with($this->pacienteId)
+			->andReturn([]);
 
-        $contract = Mockery::mock(Contract::class);
-        $contract->shouldReceive('getId')->andReturn('contract-1');
-        $contract->shouldReceive('getPacienteId')->andReturn($this->pacienteId);
-        $contract->shouldReceive('getServicioId')->andReturn('servicio-1');
-        $contract->shouldReceive('getFechaContrato')->andReturn($contractDate);
-        $contract->shouldReceive('getEstado')->andReturn('ACTIVO');
+		$result = $this->handler->handle($this->query);
 
-        $this->repository->shouldReceive('findByPacienteId')
-            ->once()
-            ->with($this->pacienteId)
-            ->andReturn([$contract]);
+		$this->assertIsArray($result);
+		$this->assertEmpty($result);
+	}
 
-        $result = $this->handler->__invoke($this->query);
+	public function testInvokeCallsHandle(): void
+	{
+		// Mock ContractDate
+		$contractDate = Mockery::mock(ContractDate::class);
+		$contractDate->shouldReceive('getFechaInicio')->andReturn($this->fechaInicio);
+		$contractDate->shouldReceive('getFechaFin')->andReturn($this->fechaFin);
 
-        $this->assertCount(1, $result);
-        $this->assertContainsOnlyInstancesOf(ContractDTO::class, $result);
-        $this->assertEquals('contract-1', $result[0]->id);
-    }
-} 
+		$contract = Mockery::mock(Contract::class);
+		$contract->shouldReceive('getId')->andReturn('contract-1');
+		$contract->shouldReceive('getPacienteId')->andReturn($this->pacienteId);
+		$contract->shouldReceive('getServicioId')->andReturn('servicio-1');
+		$contract->shouldReceive('getPlanAlimentarioId')->andReturn(null);
+		$contract->shouldReceive('getFechaContrato')->andReturn($contractDate);
+		$contract->shouldReceive('getEstado')->andReturn('ACTIVO');
+
+		$this->repository
+			->shouldReceive('findByPacienteId')
+			->once()
+			->with($this->pacienteId)
+			->andReturn([$contract]);
+
+		$result = $this->handler->__invoke($this->query);
+
+		$this->assertCount(1, $result);
+		$this->assertContainsOnlyInstancesOf(ContractDTO::class, $result);
+		$this->assertEquals('contract-1', $result[0]->id);
+	}
+}

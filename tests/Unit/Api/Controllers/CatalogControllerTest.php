@@ -22,273 +22,308 @@ use Illuminate\Http\Response;
 
 class CatalogControllerTest extends MockeryTestCase
 {
-    private CatalogController $controller;
-    private CommandBus $commandBus;
-    private QueryBus $queryBus;
+	private CatalogController $controller;
+	private CommandBus $commandBus;
+	private QueryBus $queryBus;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->commandBus = Mockery::mock(CommandBus::class);
-        $this->queryBus = Mockery::mock(QueryBus::class);
-        $this->controller = new CatalogController($this->commandBus, $this->queryBus);
-    }
+	protected function setUp(): void
+	{
+		parent::setUp();
+		$this->commandBus = Mockery::mock(CommandBus::class);
+		$this->queryBus = Mockery::mock(QueryBus::class);
+		$this->controller = new CatalogController($this->commandBus, $this->queryBus);
+	}
 
-    public function testIndexReturnsListOfCatalogs(): void
-    {
-        $catalogs = [
-            ['id' => '1', 'nombre' => 'Catalog 1', 'estado' => 'activo'],
-            ['id' => '2', 'nombre' => 'Catalog 2', 'estado' => 'inactivo']
-        ];
+	public function testIndexReturnsListOfCatalogs(): void
+	{
+		$catalogs = [
+			['id' => '1', 'nombre' => 'Catalog 1', 'estado' => 'activo'],
+			['id' => '2', 'nombre' => 'Catalog 2', 'estado' => 'inactivo'],
+		];
 
-        $this->queryBus->shouldReceive('ask')
-                      ->with(Mockery::type(ListCatalogsQuery::class))
-                      ->once()
-                      ->andReturn($catalogs);
+		$this->queryBus
+			->shouldReceive('dispatch')
+			->with(Mockery::type(ListCatalogsQuery::class))
+			->once()
+			->andReturn($catalogs);
 
-        $response = $this->controller->index();
+		$response = $this->controller->index();
 
-        $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
-        $this->assertEquals($catalogs, json_decode($response->getContent(), true));
-    }
+		$this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
+		$this->assertEquals($catalogs, json_decode($response->getContent(), true));
+	}
 
-    public function testIndexHandlesException(): void
-    {
-        $this->queryBus->shouldReceive('ask')
-                      ->with(Mockery::type(ListCatalogsQuery::class))
-                      ->once()
-                      ->andThrow(new \Exception('Error interno'));
+	public function testIndexHandlesException(): void
+	{
+		$this->queryBus
+			->shouldReceive('dispatch')
+			->with(Mockery::type(ListCatalogsQuery::class))
+			->once()
+			->andThrow(new \Exception('Error interno'));
 
-        $response = $this->controller->index();
+		$response = $this->controller->index();
 
-        $this->assertEquals(Response::HTTP_INTERNAL_SERVER_ERROR, $response->getStatusCode());
-        $this->assertEquals(
-            'Error al listar los catálogos: Error interno',
-            json_decode($response->getContent(), true)['error']
-        );
-    }
+		$this->assertEquals(Response::HTTP_INTERNAL_SERVER_ERROR, $response->getStatusCode());
+		$this->assertEquals(
+			'Error al listar los catálogos: Error interno',
+			json_decode($response->getContent(), true)['error']
+		);
+	}
 
-    public function testShowReturnsCatalog(): void
-    {
-        $catalogId = 'catalog-123';
-        $catalog = [
-            'id' => $catalogId,
-            'nombre' => 'Test Catalog',
-            'estado' => 'activo'
-        ];
+	public function testShowReturnsCatalog(): void
+	{
+		$catalogId = 'catalog-123';
+		$catalog = [
+			'id' => $catalogId,
+			'nombre' => 'Test Catalog',
+			'estado' => 'activo',
+		];
 
-        $this->queryBus->shouldReceive('ask')
-                      ->with(Mockery::type(GetCatalogQuery::class))
-                      ->once()
-                      ->andReturn($catalog);
+		$this->queryBus
+			->shouldReceive('dispatch')
+			->with(Mockery::type(GetCatalogQuery::class))
+			->once()
+			->andReturn($catalog);
 
-        $response = $this->controller->show($catalogId);
+		$response = $this->controller->show($catalogId);
 
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals($catalog, json_decode($response->getContent(), true));
-    }
+		$this->assertEquals(200, $response->getStatusCode());
+		$this->assertEquals($catalog, json_decode($response->getContent(), true));
+	}
 
-    public function testShowHandlesCatalogException(): void
-    {
-        $catalogId = 'catalog-123';
+	public function testShowHandlesCatalogException(): void
+	{
+		$catalogId = 'catalog-123';
 
-        $this->queryBus->shouldReceive('ask')
-                      ->with(Mockery::type(GetCatalogQuery::class))
-                      ->once()
-                      ->andThrow(new CatalogException('Catálogo no encontrado'));
+		$this->queryBus
+			->shouldReceive('dispatch')
+			->with(Mockery::type(GetCatalogQuery::class))
+			->once()
+			->andThrow(new CatalogException('Catálogo no encontrado'));
 
-        $response = $this->controller->show($catalogId);
+		$response = $this->controller->show($catalogId);
 
-        $this->assertEquals(Response::HTTP_NOT_FOUND, $response->getStatusCode());
-        $this->assertEquals('Catálogo no encontrado', json_decode($response->getContent(), true)['error']);
-    }
+		$this->assertEquals(Response::HTTP_NOT_FOUND, $response->getStatusCode());
+		$this->assertEquals(
+			'Catálogo no encontrado',
+			json_decode($response->getContent(), true)['error']
+		);
+	}
 
-    public function testShowHandlesGenericException(): void
-    {
-        $catalogId = 'catalog-123';
+	public function testShowHandlesGenericException(): void
+	{
+		$catalogId = 'catalog-123';
 
-        $this->queryBus->shouldReceive('ask')
-                      ->with(Mockery::type(GetCatalogQuery::class))
-                      ->once()
-                      ->andThrow(new \Exception('Error interno'));
+		$this->queryBus
+			->shouldReceive('dispatch')
+			->with(Mockery::type(GetCatalogQuery::class))
+			->once()
+			->andThrow(new \Exception('Error interno'));
 
-        $response = $this->controller->show($catalogId);
+		$response = $this->controller->show($catalogId);
 
-        $this->assertEquals(Response::HTTP_INTERNAL_SERVER_ERROR, $response->getStatusCode());
-        $this->assertEquals(
-            'Error al obtener el catálogo: Error interno',
-            json_decode($response->getContent(), true)['error']
-        );
-    }
+		$this->assertEquals(Response::HTTP_INTERNAL_SERVER_ERROR, $response->getStatusCode());
+		$this->assertEquals(
+			'Error al obtener el catálogo: Error interno',
+			json_decode($response->getContent(), true)['error']
+		);
+	}
 
-    public function testStoreCreatesCatalog(): void
-    {
-        $request = Mockery::mock(CreateCatalogRequest::class);
-        $request->shouldReceive('all')
-                ->andReturn(['nombre' => 'Test Catalog']);
-        $request->nombre = 'Test Catalog';
+	public function testStoreCreatesCatalog(): void
+	{
+		$request = Mockery::mock(CreateCatalogRequest::class);
+		$request->shouldReceive('validated')->with('nombre')->andReturn('Test Catalog');
 
-        $this->commandBus->shouldReceive('dispatch')
-                        ->with(Mockery::type(CreateCatalogCommand::class))
-                        ->once();
+		$commandResult = Mockery::mock('Commercial\Application\Commands\CommandResult');
+		$commandResult->shouldReceive('isSuccess')->andReturn(true);
+		$commandResult->shouldReceive('getId')->andReturn('catalog-123');
 
-        $response = $this->controller->store($request);
+		$this->commandBus
+			->shouldReceive('dispatch')
+			->with(Mockery::type(CreateCatalogCommand::class))
+			->once()
+			->andReturn($commandResult);
 
-        $this->assertEquals(Response::HTTP_CREATED, $response->getStatusCode());
-        $this->assertEquals(
-            'Catálogo creado exitosamente',
-            json_decode($response->getContent(), true)['message']
-        );
-    }
+		$catalog = ['id' => 'catalog-123', 'nombre' => 'Test Catalog', 'estado' => 'activo'];
+		$this->queryBus
+			->shouldReceive('dispatch')
+			->with(Mockery::type(GetCatalogQuery::class))
+			->once()
+			->andReturn($catalog);
 
-    public function testStoreHandlesException(): void
-    {
-        $request = Mockery::mock(CreateCatalogRequest::class);
-        $request->shouldReceive('all')
-                ->andReturn(['nombre' => 'Test Catalog']);
-        $request->nombre = 'Test Catalog';
+		$response = $this->controller->store($request);
 
-        $this->commandBus->shouldReceive('dispatch')
-                        ->with(Mockery::type(CreateCatalogCommand::class))
-                        ->once()
-                        ->andThrow(new \Exception('Error interno'));
+		$this->assertEquals(Response::HTTP_CREATED, $response->getStatusCode());
+		$this->assertEquals(
+			'Catálogo creado exitosamente',
+			json_decode($response->getContent(), true)['message']
+		);
+	}
 
-        $response = $this->controller->store($request);
+	public function testStoreHandlesException(): void
+	{
+		$request = Mockery::mock(CreateCatalogRequest::class);
+		$request->shouldReceive('validated')->with('nombre')->andReturn('Test Catalog');
 
-        $this->assertEquals(Response::HTTP_INTERNAL_SERVER_ERROR, $response->getStatusCode());
-        $this->assertEquals(
-            'Error al crear el catálogo: Error interno',
-            json_decode($response->getContent(), true)['error']
-        );
-    }
+		$this->commandBus
+			->shouldReceive('dispatch')
+			->with(Mockery::type(CreateCatalogCommand::class))
+			->once()
+			->andThrow(new \Exception('Error interno'));
 
-    public function testUpdateModifiesCatalog(): void
-    {
-        $catalogId = 'catalog-123';
-        $currentCatalog = (object)[
-            'estado' => ServiceStatus::fromString('activo')
-        ];
+		$response = $this->controller->store($request);
 
-        $request = Mockery::mock(UpdateCatalogRequest::class);
-        $request->shouldReceive('all')
-                ->andReturn([
-                    'nombre' => 'Updated Catalog',
-                    'estado' => 'inactivo'
-                ]);
-        $request->nombre = 'Updated Catalog';
-        $request->estado = 'inactivo';
+		$this->assertEquals(Response::HTTP_INTERNAL_SERVER_ERROR, $response->getStatusCode());
+		$this->assertEquals(
+			'Error al crear el catálogo: Error interno',
+			json_decode($response->getContent(), true)['error']
+		);
+	}
 
-        $this->queryBus->shouldReceive('ask')
-                      ->with(Mockery::type(GetCatalogQuery::class))
-                      ->once()
-                      ->andReturn($currentCatalog);
+	public function testUpdateModifiesCatalog(): void
+	{
+		$catalogId = 'catalog-123';
+		$currentCatalog = (object) [
+			'estado' => ServiceStatus::fromString('activo'),
+		];
 
-        $this->commandBus->shouldReceive('dispatch')
-                        ->with(Mockery::type(UpdateCatalogCommand::class))
-                        ->once();
+		$request = Mockery::mock(UpdateCatalogRequest::class);
+		$request->shouldReceive('validated')->with('nombre')->andReturn('Updated Catalog');
+		$request->shouldReceive('validated')->with('estado')->andReturn('inactivo');
 
-        $response = $this->controller->update($request, $catalogId);
+		$commandResult = Mockery::mock('Commercial\Application\Commands\CommandResult');
+		$commandResult->shouldReceive('isSuccess')->andReturn(true);
+		$commandResult->shouldReceive('getId')->andReturn($catalogId);
 
-        $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
-        $this->assertEquals(
-            'Catálogo actualizado exitosamente',
-            json_decode($response->getContent(), true)['message']
-        );
-    }
+		$this->queryBus
+			->shouldReceive('dispatch')
+			->with(Mockery::type(GetCatalogQuery::class))
+			->once()
+			->andReturn($currentCatalog);
 
-    public function testUpdateHandlesCatalogException(): void
-    {
-        $catalogId = 'catalog-123';
-        $request = Mockery::mock(UpdateCatalogRequest::class);
-        $request->shouldReceive('all')
-                ->andReturn([
-                    'nombre' => 'Updated Catalog',
-                    'estado' => 'inactivo'
-                ]);
+		$this->commandBus
+			->shouldReceive('dispatch')
+			->with(Mockery::type(UpdateCatalogCommand::class))
+			->once()
+			->andReturn($commandResult);
 
-        $this->queryBus->shouldReceive('ask')
-                      ->with(Mockery::type(GetCatalogQuery::class))
-                      ->once()
-                      ->andThrow(new CatalogException('Catálogo no encontrado'));
+		$updatedCatalog = [
+			'id' => $catalogId,
+			'nombre' => 'Updated Catalog',
+			'estado' => 'inactivo',
+		];
+		$this->queryBus
+			->shouldReceive('dispatch')
+			->with(Mockery::type(GetCatalogQuery::class))
+			->once()
+			->andReturn($updatedCatalog);
 
-        $response = $this->controller->update($request, $catalogId);
+		$response = $this->controller->update($request, $catalogId);
 
-        $this->assertEquals(Response::HTTP_NOT_FOUND, $response->getStatusCode());
-        $this->assertEquals(
-            'Catálogo no encontrado',
-            json_decode($response->getContent(), true)['error']
-        );
-    }
+		$this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
+		$this->assertEquals(
+			'Catálogo actualizado exitosamente',
+			json_decode($response->getContent(), true)['message']
+		);
+	}
 
-    public function testUpdateHandlesGenericException(): void
-    {
-        $catalogId = 'catalog-123';
-        $request = Mockery::mock(UpdateCatalogRequest::class);
+	public function testUpdateHandlesCatalogException(): void
+	{
+		$catalogId = 'catalog-123';
+		$request = Mockery::mock(UpdateCatalogRequest::class);
+		$request->shouldReceive('all')->andReturn([
+			'nombre' => 'Updated Catalog',
+			'estado' => 'inactivo',
+		]);
 
-        $this->queryBus->shouldReceive('ask')
-                      ->with(Mockery::type(GetCatalogQuery::class))
-                      ->once()
-                      ->andThrow(new \Exception('Error interno'));
+		$this->queryBus
+			->shouldReceive('dispatch')
+			->with(Mockery::type(GetCatalogQuery::class))
+			->once()
+			->andThrow(new CatalogException('Catálogo no encontrado'));
 
-        $response = $this->controller->update($request, $catalogId);
+		$response = $this->controller->update($request, $catalogId);
 
-        $this->assertEquals(Response::HTTP_INTERNAL_SERVER_ERROR, $response->getStatusCode());
-        $this->assertEquals(
-            'Error al actualizar el catálogo: Error interno',
-            json_decode($response->getContent(), true)['error']
-        );
-    }
+		$this->assertEquals(Response::HTTP_NOT_FOUND, $response->getStatusCode());
+		$this->assertEquals(
+			'Catálogo no encontrado',
+			json_decode($response->getContent(), true)['error']
+		);
+	}
 
-    public function testDestroyDeletesCatalog(): void
-    {
-        $catalogId = 'catalog-123';
+	public function testUpdateHandlesGenericException(): void
+	{
+		$catalogId = 'catalog-123';
+		$request = Mockery::mock(UpdateCatalogRequest::class);
 
-        $this->commandBus->shouldReceive('dispatch')
-                        ->with(Mockery::type(DeleteCatalogCommand::class))
-                        ->once();
+		$this->queryBus
+			->shouldReceive('dispatch')
+			->with(Mockery::type(GetCatalogQuery::class))
+			->once()
+			->andThrow(new \Exception('Error interno'));
 
-        $response = $this->controller->destroy($catalogId);
+		$response = $this->controller->update($request, $catalogId);
 
-        $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
-        $this->assertEquals(
-            'Catálogo eliminado exitosamente',
-            json_decode($response->getContent(), true)['message']
-        );
-    }
+		$this->assertEquals(Response::HTTP_INTERNAL_SERVER_ERROR, $response->getStatusCode());
+		$this->assertEquals(
+			'Error al actualizar el catálogo: Error interno',
+			json_decode($response->getContent(), true)['error']
+		);
+	}
 
-    public function testDestroyHandlesCatalogException(): void
-    {
-        $catalogId = 'catalog-123';
+	public function testDestroyDeletesCatalog(): void
+	{
+		$catalogId = 'catalog-123';
 
-        $this->commandBus->shouldReceive('dispatch')
-                        ->with(Mockery::type(DeleteCatalogCommand::class))
-                        ->once()
-                        ->andThrow(new CatalogException('Catálogo no encontrado'));
+		$this->commandBus
+			->shouldReceive('dispatch')
+			->with(Mockery::type(DeleteCatalogCommand::class))
+			->once();
 
-        $response = $this->controller->destroy($catalogId);
+		$response = $this->controller->destroy($catalogId);
 
-        $this->assertEquals(Response::HTTP_NOT_FOUND, $response->getStatusCode());
-        $this->assertEquals(
-            'Catálogo no encontrado',
-            json_decode($response->getContent(), true)['error']
-        );
-    }
+		$this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
+		$this->assertEquals(
+			'Catálogo eliminado exitosamente',
+			json_decode($response->getContent(), true)['message']
+		);
+	}
 
-    public function testDestroyHandlesGenericException(): void
-    {
-        $catalogId = 'catalog-123';
+	public function testDestroyHandlesCatalogException(): void
+	{
+		$catalogId = 'catalog-123';
 
-        $this->commandBus->shouldReceive('dispatch')
-                        ->with(Mockery::type(DeleteCatalogCommand::class))
-                        ->once()
-                        ->andThrow(new \Exception('Error interno'));
+		$this->commandBus
+			->shouldReceive('dispatch')
+			->with(Mockery::type(DeleteCatalogCommand::class))
+			->once()
+			->andThrow(new CatalogException('Catálogo no encontrado'));
 
-        $response = $this->controller->destroy($catalogId);
+		$response = $this->controller->destroy($catalogId);
 
-        $this->assertEquals(Response::HTTP_INTERNAL_SERVER_ERROR, $response->getStatusCode());
-        $this->assertEquals(
-            'Error al eliminar el catálogo: Error interno',
-            json_decode($response->getContent(), true)['error']
-        );
-    }
-} 
+		$this->assertEquals(Response::HTTP_NOT_FOUND, $response->getStatusCode());
+		$this->assertEquals(
+			'Catálogo no encontrado',
+			json_decode($response->getContent(), true)['error']
+		);
+	}
+
+	public function testDestroyHandlesGenericException(): void
+	{
+		$catalogId = 'catalog-123';
+
+		$this->commandBus
+			->shouldReceive('dispatch')
+			->with(Mockery::type(DeleteCatalogCommand::class))
+			->once()
+			->andThrow(new \Exception('Error interno'));
+
+		$response = $this->controller->destroy($catalogId);
+
+		$this->assertEquals(Response::HTTP_INTERNAL_SERVER_ERROR, $response->getStatusCode());
+		$this->assertEquals(
+			'Error al eliminar el catálogo: Error interno',
+			json_decode($response->getContent(), true)['error']
+		);
+	}
+}
