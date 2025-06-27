@@ -19,7 +19,7 @@ Dockerfile*
 docker-compose*
 .dockerignore
 
-# Archivos de Node
+# Archivos de Node (PERO MANTENER LOS NECESARIOS)
 node_modules
 npm-debug.log
 yarn-debug.log
@@ -50,10 +50,20 @@ tests
 phpunit.xml
 .phpunit.result.cache
 coverage
-
-# Otros archivos innecesarios
-*.md
-*.txt
-*.json
-!composer.json
 composer.lock
+
+# Agregar más exclusiones
+docs/
+*.md
+.phpunit.result.cache
+
+
+
+# Archivos de documentación adicionales
+postman/
+
+# Archivos temporales
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
