@@ -24,14 +24,6 @@ class ContractDate
 		\DateTimeImmutable $fecha_inicio,
 		?\DateTimeImmutable $fecha_fin
 	): void {
-		if ($fecha_inicio < DateTimeHelper::now()) {
-			throw new \InvalidArgumentException(
-				"La fecha de inicio no puede ser en el pasado {$fecha_inicio->format(
-					'Y-m-d H:i:s'
-				)}"
-			);
-		}
-
 		if ($fecha_fin !== null && $fecha_fin <= $fecha_inicio) {
 			throw new \InvalidArgumentException(
 				"La fecha de fin debe ser posterior a la fecha de inicio {$fecha_fin->format(
