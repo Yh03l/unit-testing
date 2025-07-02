@@ -40,8 +40,17 @@ class LaravelCommandBus implements CommandBus
 	private function getHandlerClass(object $command): string
 	{
 		$commandClass = get_class($command);
-		$commandNamespace = substr($commandClass, 0, strrpos($commandClass, '\\'));
-		$commandName = substr($commandClass, strrpos($commandClass, '\\') + 1);
+		$lastBackslashPos = strrpos($commandClass, '\\');
+
+		if ($lastBackslashPos === false) {
+			// Si no hay namespace, solo usar el nombre de la clase
+			$commandName = $commandClass;
+			$handlerName = str_replace('Command', 'Handler', $commandName);
+			return $handlerName;
+		}
+
+		$commandNamespace = substr($commandClass, 0, $lastBackslashPos);
+		$commandName = substr($commandClass, $lastBackslashPos + 1);
 		$handlerName = str_replace('Command', 'Handler', $commandName);
 
 		return $commandNamespace . '\\' . $handlerName;

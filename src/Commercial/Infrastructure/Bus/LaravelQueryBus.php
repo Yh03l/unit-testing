@@ -39,8 +39,17 @@ class LaravelQueryBus implements QueryBus
 	private function getHandlerClass(object $query): string
 	{
 		$queryClass = get_class($query);
-		$queryNamespace = substr($queryClass, 0, strrpos($queryClass, '\\'));
-		$queryName = substr($queryClass, strrpos($queryClass, '\\') + 1);
+		$lastBackslashPos = strrpos($queryClass, '\\');
+
+		if ($lastBackslashPos === false) {
+			// Si no hay namespace, solo usar el nombre de la clase
+			$queryName = $queryClass;
+			$handlerName = str_replace('Query', 'Handler', $queryName);
+			return $handlerName;
+		}
+
+		$queryNamespace = substr($queryClass, 0, $lastBackslashPos);
+		$queryName = substr($queryClass, $lastBackslashPos + 1);
 		$handlerName = str_replace('Query', 'Handler', $queryName);
 
 		return $queryNamespace . '\\' . $handlerName;
