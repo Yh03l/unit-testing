@@ -14,6 +14,7 @@ use Commercial\Infrastructure\Bus\QueryBus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
+use Illuminate\Http\Request;
 
 class PatientController extends Controller
 {
@@ -87,11 +88,11 @@ class PatientController extends Controller
 		}
 	}
 
-	public function list(): JsonResponse
+	public function list(Request $request): JsonResponse
 	{
 		try {
-			$limit = request()->get('limit') ? (int) request()->get('limit') : null;
-			$offset = request()->get('offset') ? (int) request()->get('offset') : null;
+			$limit = $request->input('limit', 10);
+			$offset = $request->input('offset', 0);
 
 			$patients = $this->queryBus->dispatch(new ListPatientsQuery($limit, $offset));
 

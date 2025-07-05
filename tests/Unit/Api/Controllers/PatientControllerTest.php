@@ -13,6 +13,7 @@ use Illuminate\Http\Response;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Tests\TestCase;
+use Illuminate\Http\Request;
 
 class PatientControllerTest extends TestCase
 {
@@ -34,35 +35,6 @@ class PatientControllerTest extends TestCase
 	{
 		Mockery::close();
 		parent::tearDown();
-	}
-
-	// Helper para simular request() de Laravel
-	private function mockRequest(array $data = []): void
-	{
-		// Limpiar cualquier función request previa
-		if (function_exists('request')) {
-			// No podemos eliminar funciones en PHP, pero podemos redefinir
-		}
-
-		// Crear una nueva función request
-		eval(
-			'if (!function_exists("request")) { 
-			function request($key = null, $default = null) { 
-				static $requestData = []; 
-				if (empty($requestData)) { 
-					$requestData = ' .
-				var_export($data, true) .
-				'; 
-				} 
-				if ($key === null) { 
-					return (object)["get" => function($k, $d = null) use ($requestData) { 
-						return $requestData[$k] ?? $d; 
-					}]; 
-				} 
-				return $requestData[$key] ?? $default; 
-			} 
-		}'
-		);
 	}
 
 	public function testGetReturnsPatientWhenFound(): void
@@ -101,7 +73,9 @@ class PatientControllerTest extends TestCase
 
 	public function testListReturnsPatientsList(): void
 	{
-		$this->mockRequest();
+		$request = \Mockery::mock(Request::class);
+		$request->shouldReceive('input')->with('limit', 10)->andReturn(10);
+		$request->shouldReceive('input')->with('offset', 0)->andReturn(0);
 
 		$patientsData = [
 			[
@@ -120,7 +94,7 @@ class PatientControllerTest extends TestCase
 
 		$this->queryBus->shouldReceive('dispatch')->once()->andReturn($patientsData);
 
-		$response = $this->controller->list();
+		$response = $this->controller->list($request);
 
 		$this->assertInstanceOf(JsonResponse::class, $response);
 		$this->assertEquals(200, $response->getStatusCode());
@@ -129,11 +103,13 @@ class PatientControllerTest extends TestCase
 
 	public function testListReturnsEmptyArrayWhenNoPatients(): void
 	{
-		$this->mockRequest();
+		$request = \Mockery::mock(Request::class);
+		$request->shouldReceive('input')->with('limit', 10)->andReturn(10);
+		$request->shouldReceive('input')->with('offset', 0)->andReturn(0);
 
 		$this->queryBus->shouldReceive('dispatch')->once()->andReturn([]);
 
-		$response = $this->controller->list();
+		$response = $this->controller->list($request);
 
 		$this->assertInstanceOf(JsonResponse::class, $response);
 		$this->assertEquals(200, $response->getStatusCode());
@@ -142,7 +118,9 @@ class PatientControllerTest extends TestCase
 
 	public function testListWithPagination(): void
 	{
-		$this->mockRequest(['limit' => '10', 'offset' => '5']);
+		$request = \Mockery::mock(Request::class);
+		$request->shouldReceive('input')->with('limit', 10)->andReturn(10);
+		$request->shouldReceive('input')->with('offset', 0)->andReturn(5);
 
 		$patientsData = [
 			[
@@ -155,7 +133,7 @@ class PatientControllerTest extends TestCase
 
 		$this->queryBus->shouldReceive('dispatch')->once()->andReturn($patientsData);
 
-		$response = $this->controller->list();
+		$response = $this->controller->list($request);
 
 		$this->assertInstanceOf(JsonResponse::class, $response);
 		$this->assertEquals(200, $response->getStatusCode());
