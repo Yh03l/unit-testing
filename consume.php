@@ -2,7 +2,7 @@
 error_reporting(E_ALL & ~E_DEPRECATED);
 
 // Cargar el framework
-require __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/vendor/autoload.php';
 
 $app = require_once __DIR__ . '/bootstrap/app.php';
 
