@@ -39,6 +39,9 @@ final class PlanAlimentarioAsignadoConsumer
 				);
 			}
 
+			// Normalizar claves del JSON para manejar variaciones de mayúsculas
+			$data = $this->normalizeJsonKeys($data);
+
 			// Validar campos requeridos
 			if (!isset($data['idContrato']) || !isset($data['idPlanAlimentario'])) {
 				throw new \RuntimeException(
@@ -63,5 +66,23 @@ final class PlanAlimentarioAsignadoConsumer
 			]);
 			throw $e;
 		}
+	}
+
+	/**
+	 * Normaliza las claves del JSON para manejar variaciones de mayúsculas
+	 */
+	private function normalizeJsonKeys(array $data): array
+	{
+		// Buscar si existe IdContrato y asignarlo a idContrato
+		if (isset($data['IdContrato']) && !isset($data['idContrato'])) {
+			$data['idContrato'] = $data['IdContrato'];
+		}
+
+		// Buscar si existe IdPlan y asignarlo a idPlanAlimentario
+		if (isset($data['IdPlanAlimentario']) && !isset($data['idPlanAlimentario'])) {
+			$data['idPlanAlimentario'] = $data['IdPlanAlimentario'];
+		}
+
+		return $data;
 	}
 }
